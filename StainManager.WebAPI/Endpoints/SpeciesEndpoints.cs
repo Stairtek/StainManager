@@ -1,9 +1,9 @@
-using StainManager.Application.Species.CreateSpecies;
-using StainManager.Application.Species.DeleteSpecies;
-using StainManager.Application.Species.GetSpecies;
-using StainManager.Application.Species.GetSpeciesById;
-using StainManager.Application.Species.RestoreSpecies;
-using StainManager.Application.Species.UpdateSpecies;
+using StainManager.Application.Species.Commands.CreateSpecies;
+using StainManager.Application.Species.Commands.DeleteSpecies;
+using StainManager.Application.Species.Commands.RestoreSpecies;
+using StainManager.Application.Species.Commands.UpdateSpecies;
+using StainManager.Application.Species.Queries.GetSpecies;
+using StainManager.Application.Species.Queries.GetSpeciesById;
 
 namespace StainManager.WebAPI.Endpoints;
 

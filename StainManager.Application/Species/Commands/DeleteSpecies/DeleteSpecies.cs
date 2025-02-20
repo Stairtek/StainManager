@@ -1,18 +1,24 @@
 using StainManager.Application.Common.RequestHandling;
 using StainManager.Domain.Species;
 
-namespace StainManager.Application.Species.RestoreSpecies;
+namespace StainManager.Application.Species.Commands.DeleteSpecies;
 
-public class RestoreSpeciesCommandHandler(
+public class DeleteSpeciesCommand
+    : ICommand
+{
+    public int Id { get; set; }
+}
+
+public class DeleteSpeciesCommandHandler(
     ISpeciesRepository speciesRepository)
-    : ICommandHandler<RestoreSpeciesCommand>
+    : ICommandHandler<DeleteSpeciesCommand>
 {
     public async Task<Result> Handle(
-        RestoreSpeciesCommand request,
+        DeleteSpeciesCommand request,
         CancellationToken cancellationToken)
     {
         var result = await speciesRepository
-            .RestoreSpeciesAsync(request.Id);
+            .DeleteSpeciesAsync(request.Id);
         
         return !result 
             ? Result.Fail("Species not found") 

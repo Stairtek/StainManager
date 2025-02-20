@@ -1,7 +1,13 @@
 using StainManager.Application.Common.RequestHandling;
 using StainManager.Domain.Species;
 
-namespace StainManager.Application.Species.GetSpecies;
+namespace StainManager.Application.Species.Queries.GetSpecies;
+
+public class GetSpeciesQuery
+    : IQuery<List<SpeciesResponse>>
+{
+    public bool IsActive { get; set; } = true;
+}
 
 public class GetSpeciesQueryHandler(
     ISpeciesRepository speciesRepository)

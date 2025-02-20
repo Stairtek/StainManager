@@ -1,7 +1,13 @@
 using StainManager.Application.Common.RequestHandling;
 using StainManager.Domain.Species;
 
-namespace StainManager.Application.Species.GetSpeciesById;
+namespace StainManager.Application.Species.Queries.GetSpeciesById;
+
+public class GetSpeciesByIdQuery
+    : IQuery<SpeciesResponse>
+{
+    public int Id { get; set; }
+}
 
 public class GetSpeciesByIdQueryHandler(
     ISpeciesRepository speciesRepository)

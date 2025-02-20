@@ -6,7 +6,7 @@ public class Species : Entity
 {
     public required string Name { get; set; }
     
-    public required string Abbreviation { get; set; }
+    public string? Abbreviation { get; set; }
     
     public bool IsProduction { get; set; }
     
