@@ -15,11 +15,16 @@ public class SpeciesRepository(
         return result;
     }
 
-    public async Task<Species?> GetSpeciesByIdAsync(int id)
+    public async Task<Species?> GetSpeciesByIdAsync(int id, bool includeInactive = false)
     {
-        var species = await context.Species
-            .Where(c => c.IsActive)
-            .FirstOrDefaultAsync(c => c.Id == id);
+        var speciesQuery = context.Species
+            .Where(c => c.Id == id);
+
+        if (!includeInactive)
+            speciesQuery = speciesQuery.Where(c => c.IsActive);
+        
+        var species = await speciesQuery
+            .FirstOrDefaultAsync();
         
         return species;
     }
@@ -74,7 +79,7 @@ public class SpeciesRepository(
 
     public async Task<bool> RestoreSpeciesAsync(int id)
     {
-        var speciesToRestore = await GetSpeciesByIdAsync(id);
+        var speciesToRestore = await GetSpeciesByIdAsync(id, true);
         
         if (speciesToRestore == null)
             return false;

@@ -5,7 +5,9 @@ public interface ISpeciesRepository
     Task<List<Species>> GetAllSpeciesAsync(
         bool isActive = true);
     
-    Task<Species?> GetSpeciesByIdAsync(int id);
+    Task<Species?> GetSpeciesByIdAsync(
+        int id, 
+        bool includeInactive = false);
     
     Task<Species> CreateSpeciesAsync(Species species);
     
