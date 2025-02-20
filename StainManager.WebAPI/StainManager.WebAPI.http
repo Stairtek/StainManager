@@ -1,0 +1,6 @@
+@StainManager.WebAPI_HostAddress = http://localhost:5199
+
+GET {{StainManager.WebAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
