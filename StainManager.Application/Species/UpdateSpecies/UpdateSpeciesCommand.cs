@@ -1,3 +1,5 @@
+using StainManager.Application.Common.RequestHandling;
+
 namespace StainManager.Application.Species.UpdateSpecies;
 
 public class UpdateSpeciesCommand

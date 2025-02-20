@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 using StainManager.Domain.Species;
 
 namespace StainManager.Infrastructure;

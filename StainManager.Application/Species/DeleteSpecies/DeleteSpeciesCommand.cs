@@ -1,3 +1,5 @@
+using StainManager.Application.Common.RequestHandling;
+
 namespace StainManager.Application.Species.DeleteSpecies;
 
 public class DeleteSpeciesCommand

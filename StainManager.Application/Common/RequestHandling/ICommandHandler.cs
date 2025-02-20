@@ -1,6 +1,4 @@
-using StainManager.Domain.Abstractions;
-
-namespace StainManager.Application.Abstractions.RequestHandling;
+namespace StainManager.Application.Common.RequestHandling;
 
 public interface ICommandHandler<TCommand>
     : IRequestHandler<TCommand, Result>
