@@ -1,4 +1,4 @@
-namespace StainManager.Domain.Abstractions;
+namespace StainManager.Domain.Common;
 
 public class Result
 {

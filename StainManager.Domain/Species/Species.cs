@@ -1,4 +1,4 @@
-using StainManager.Domain.Abstractions;
+using StainManager.Domain.Common;
 
 namespace StainManager.Domain.Species;
 

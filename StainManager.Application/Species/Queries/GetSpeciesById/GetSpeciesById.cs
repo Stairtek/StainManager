@@ -1,4 +1,5 @@
 using StainManager.Application.Common.RequestHandling;
+using StainManager.Domain.Common;
 using StainManager.Domain.Species;
 
 namespace StainManager.Application.Species.Queries.GetSpeciesById;

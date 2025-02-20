@@ -6,9 +6,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StainManager.Application", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StainManager.Infrastructure", "StainManager.Infrastructure\StainManager.Infrastructure.csproj", "{767C588E-270A-4C70-83AC-1ACF98B02B31}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{1CAB8894-EF5E-4C6D-B90F-68F69AD61C06}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "API", "API", "{1CAB8894-EF5E-4C6D-B90F-68F69AD61C06}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StainManager.WebAPI", "StainManager.WebAPI\StainManager.WebAPI.csproj", "{1DF1D253-2939-46E7-8998-FB51C6B75C9C}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "client", "client", "{67AA26B3-286D-4F9D-8190-B6131F0E27B4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

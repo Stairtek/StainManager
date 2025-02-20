@@ -1,3 +1,5 @@
+using StainManager.Domain.Common;
+
 namespace StainManager.Application.Common.RequestHandling;
 
 public interface ICommandHandler<TCommand>
