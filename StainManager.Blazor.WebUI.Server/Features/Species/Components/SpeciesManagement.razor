@@ -74,7 +74,7 @@
             <!--#endregion Header Actions-->
         </MudGrid>
     </ToolBarContent>
-
+    
     <NoRecordsContent>
         <MudText Typo="Typo.h6">No Species Found</MudText>
     </NoRecordsContent>
@@ -170,7 +170,7 @@
         GridState<SpeciesManagementModel> state)
     {
         var speciesManagement = await SpeciesService.GetSpeciesManagement(
-            state.Page,
+            state.Page + 1, // 0-based index
             state.PageSize,
             _showDeleted);
 

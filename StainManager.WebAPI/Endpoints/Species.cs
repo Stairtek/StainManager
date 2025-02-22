@@ -43,7 +43,7 @@ public class Species : EndpointGroupBase
         var query = new GetSpeciesForManagementQuery
         {
             IsActive = isActive,
-            PageNumber = pageNumber ?? 1,
+            PageNumber = pageNumber is null or < 1 ? 1 : pageNumber.Value,
             PageSize = pageSize ?? 10
         };
         var result = await sender.Send(query);
