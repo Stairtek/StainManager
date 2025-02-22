@@ -82,18 +82,13 @@ public static class QueryableExtensions
     {
         var typeOfObject = ((JsonElement)obj).ValueKind;
 
-        switch (typeOfObject)
+        return typeOfObject switch
         {
-            case JsonValueKind.Number:
-                return ((JsonElement)obj).GetInt32();
-            case JsonValueKind.String:
-                return ((JsonElement)obj).GetString()!;
-            case JsonValueKind.True:
-                return true;
-            case JsonValueKind.False:
-                return false;
-            default:
-                return null;
-        }    
+            JsonValueKind.Number => ((JsonElement)obj).GetInt32(),
+            JsonValueKind.String => ((JsonElement)obj).GetString()!,
+            JsonValueKind.True => true,
+            JsonValueKind.False => false,
+            _ => null
+        };
     }
 }
