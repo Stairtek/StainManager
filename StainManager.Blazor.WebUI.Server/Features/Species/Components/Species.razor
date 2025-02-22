@@ -1,0 +1,241 @@
+@page "/species"
+@using StainManager.Blazor.WebUI.Server.Features.Species.Models
+@using StainManager.Blazor.WebUI.Server.Features.Species.Services
+
+@inject ISpeciesService SpeciesService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<style>
+    .mud-table-toolbar {
+        border-bottom: 1px solid #ddd;
+    }
+</style>
+
+<MudDataGrid
+    @ref="_dataGrid"
+    T="SpeciesModel"
+    ServerData="LoadSpecies"
+    Hover="true"
+    Striped="true"
+    ColumnResizeMode="ResizeMode.Column"
+    Elevation="3">
+    <ToolBarContent>
+        <MudGrid>
+            <!--#region Header & Search-->
+            <MudItem xs="4">
+                <MudPaper
+                    Class="d-flex align-center"
+                    Style="height: 48px"
+                    Elevation="0">
+
+                    <MudText Typo="Typo.h6">Species</MudText>
+
+                    <MudTextField
+                        Placeholder="Search"
+                        Adornment="Adornment.Start"
+                        Immediate="true"
+                        AdornmentIcon="@Icons.Material.Filled.Search"
+                        IconSize="Size.Medium"
+                        Class="ml-5"/>
+
+                </MudPaper>
+            </MudItem>
+            <!--#endregion Header & Search-->
+
+            <MudItem xs="6"/>
+
+            <!--#region Header Actions-->
+            <MudItem xs="2">
+                <MudPaper
+                    Elevation="0"
+                    Class="d-flex justify-end align-center">
+                    <MudTooltip Text="@(_showDeleted ? "Hide Deleted" : "Show Deleted")">
+                        <MudIconButton
+                            Icon="@(_showDeleted ? Icons.Material.Filled.RemoveRedEye : Icons.Material.Outlined.RemoveRedEye)"
+                            Color="@(_showDeleted ? Color.Error : Color.Default)"
+                            OnClick="OnToggleShowDeleted"/>
+                    </MudTooltip>
+
+                    <MudTooltip Text="Refresh">
+                        <MudIconButton Icon="@Icons.Material.Filled.Refresh" Color="Color.Default" OnClick="OnRefresh"/>
+                    </MudTooltip>
+
+                    <MudTooltip Text="Add New Species">
+                        <MudIconButton 
+                            Icon="@Icons.Material.Filled.AddCircle" 
+                            Color="Color.Default"
+                            OnClick="(e) => OpenSpeciesDialog()"/>
+                    </MudTooltip>
+                </MudPaper>
+            </MudItem>
+            <!--#endregion Header Actions-->
+        </MudGrid>
+    </ToolBarContent>
+
+    <NoRecordsContent>
+        <MudText Typo="Typo.h6">No Species Found</MudText>
+    </NoRecordsContent>
+    
+    <Columns>
+        <!--#region Edit-->
+        <TemplateColumn Title="Edit" CellStyle="width: 75px">
+            <CellTemplate>
+                @if (!_showDeleted)
+                {
+                    <MudTooltip Text="Edit Species">
+                        <MudFab 
+                            Color="Color.Secondary" 
+                            StartIcon="@Icons.Material.Filled.Edit" 
+                            Size="Size.Small"
+                            OnClick="() => OpenSpeciesDialog(context.Item.Id)"/>
+                    </MudTooltip>
+                }
+            </CellTemplate>
+        </TemplateColumn>
+        <!--#endregion Edit-->
+
+        <!--#region Thumbnail-->
+        <TemplateColumn
+            Title="Thumbnail"
+            CellStyle="width: 50px">
+            <CellTemplate>
+                @{
+                    var imageSrc = context.Item.ThumbnailImageLocation ?? "images/Image Coming Soon.jpg";
+
+                    <MudImage
+                        Src="@imageSrc"
+                        Elevation="25"
+                        Class="rounded-lg"
+                        Width="75"
+                        FallbackSrc="images/Image Coming Soon.jpg"/>
+                }
+            </CellTemplate>
+        </TemplateColumn>
+        <!--#endregion Thumbnail-->
+
+        <PropertyColumn Property="c => c.Name"/>
+
+        <PropertyColumn Property="c => c.Abbreviation"/>
+
+        <!--#region Production-->
+        <TemplateColumn Title="Production">
+            <CellTemplate>
+                <MudChip
+                    T="string"
+                    Icon="@(context.Item.IsProduction ? Icons.Material.Filled.Check : Icons.Material.Filled.Close)"
+                    Color="@(context.Item.IsProduction ? Color.Success : Color.Error)">
+                    @(context.Item.IsProduction ? "Production" : "Unavialable")
+                </MudChip>
+            </CellTemplate>
+        </TemplateColumn>
+        <!--#endregion Production-->
+
+        <!--#region Delete/Restore-->
+        <TemplateColumn
+            Title="Delete"
+            CellStyle="width: 75px">
+            <CellTemplate>
+                <MudTooltip Text="Delete Species">
+                    <MudFab
+                        Color="@(_showDeleted ? Color.Success : Color.Error)"
+                        StartIcon="@(_showDeleted ? Icons.Material.Filled.RestoreFromTrash : Icons.Material.Filled.Delete)"
+                        Size="Size.Small"
+                        OnClick="async (e) =>
+                        {
+                            if (!_showDeleted)
+                                await OpenDeleteSpeciesDialog(context.Item);
+                            else
+                                await RestoreSpecies(context.Item);
+                        }"/>
+                </MudTooltip>
+            </CellTemplate>
+        </TemplateColumn>
+        <!--#endregion Delete/Restore-->
+    </Columns>
+</MudDataGrid>
+
+@code {
+    MudDataGrid<SpeciesModel> _dataGrid = null!;
+    private bool _showDeleted;
+
+    private async Task<GridData<SpeciesModel>> LoadSpecies(GridState<SpeciesModel> state)
+    {
+        var species = await SpeciesService.GetSpecies(_showDeleted);
+
+        return new GridData<SpeciesModel>
+        {
+            TotalItems = species?.Count ?? 0,
+            Items = species ?? []
+        };
+    }
+
+    private Task OnRefresh()
+    {
+        return _dataGrid.ReloadServerData();
+    }
+    
+    private Task OnToggleShowDeleted()
+    {
+        _showDeleted = !_showDeleted;
+        return _dataGrid.ReloadServerData();
+    }
+
+    private async Task OpenSpeciesDialog(int? id = null)
+    {
+        var parameters = new DialogParameters<SpeciesDialog>
+        {
+            { c => c.Id, id },
+        };
+        var options = new DialogOptions()
+        {
+            Position = DialogPosition.TopCenter,
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true,
+            CloseButton = true
+        };
+        var addOrEditText = id is null ? "Add" : "Edit";
+        var title = $"{addOrEditText} Species";
+        var dialog = await DialogService.ShowAsync<SpeciesDialog>(
+            title,
+            parameters,
+            options);
+        var result = await dialog.Result;
+        
+        if (result is { Canceled: false })
+            await _dataGrid.ReloadServerData();
+    }
+    
+    private async Task OpenDeleteSpeciesDialog(SpeciesModel species)
+    {
+        var parameters = new DialogParameters<DeleteSpeciesDialog>
+        {
+            { c => c.Id, species.Id },
+        };
+        var options = new DialogOptions()
+        {
+            Position = DialogPosition.TopCenter
+        };
+        var dialog = await DialogService.ShowAsync<DeleteSpeciesDialog>(
+            "Delete Species", 
+            parameters,
+            options);
+        var result = await dialog.Result;
+        
+        if (result is { Canceled: false })
+            await _dataGrid.ReloadServerData();
+    }
+    
+    private async Task RestoreSpecies(SpeciesModel species)
+    {
+        var result = await SpeciesService.RestoreSpecies(species.Id);
+        
+        if (!result.IsSuccessStatusCode)
+        {
+            Snackbar.Add("Failed to restore species", Severity.Error);
+            return;
+        }
+        
+        await _dataGrid.ReloadServerData();
+    }
+}

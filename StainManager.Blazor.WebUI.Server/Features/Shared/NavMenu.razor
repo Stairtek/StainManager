@@ -1,0 +1,18 @@
+﻿<MudNavMenu 
+    Bordered="true">
+    <MudNavLink
+        Href="/"
+        Icon="@Icons.Material.Filled.Dashboard"
+        Match="NavLinkMatch.All">
+        Dashboard
+    </MudNavLink>
+    
+    @* <MudNavLink Href="/servers" Match="NavLinkMatch.Prefix">Servers</MudNavLink> *@
+    
+    <MudNavGroup 
+        Title="Settings"
+        Icon="@Icons.Material.Filled.Settings"
+        Expanded="true">
+        <MudNavLink Href="/species"  Match="NavLinkMatch.Prefix">Species</MudNavLink>
+    </MudNavGroup>
+</MudNavMenu>

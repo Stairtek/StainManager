@@ -1,0 +1,38 @@
+<div class="nav-item nav-item-sub-menu px-3">
+    <a class="nav-link d-flex" href="" @onclick="() => _expandSubMenu = !_expandSubMenu">
+        <i class="bi @Icon"></i>
+        <div class="nav-link-content w-100">@Title</div>
+
+        <div class="nav-link-submenu">
+            @if (_expandSubMenu)
+            {
+                <i class="bi bi-caret-down-fill"></i>
+            }
+            else
+            {
+                <i class="bi bi-caret-right-fill"></i>
+            }
+        </div>
+    </a>
+
+    @if (_expandSubMenu)
+    {
+        <ul class="nav flex-column">
+            @ChildContent
+        </ul>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public required string Title { get; set; }
+    
+    [Parameter]
+    public required string Icon { get; set; }
+    
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+    
+    
+    private bool _expandSubMenu = false;
+}

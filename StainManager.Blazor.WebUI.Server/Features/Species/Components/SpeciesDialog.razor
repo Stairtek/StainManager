@@ -1,0 +1,166 @@
+@using StainManager.Blazor.WebUI.Server.Features.Species.Models
+@using StainManager.Blazor.WebUI.Server.Features.Species.Services
+
+@inject ISpeciesService SpeciesService
+@inject ISnackbar Snackbar
+
+<MudForm
+    Model="@_species"
+    @ref="_form"
+    Validation="@(_validator.ValidateValue)"
+    ValidationDelay="0">
+    
+    <MudDialog>
+        <TitleContent>
+            <MudText Typo="Typo.h6">
+                <MudIcon
+                    Icon="@(IsNew ? Icons.Material.Filled.AddCircle : Icons.Material.Filled.Edit)"
+                    Class="mr-3 mb-n1"/>
+                @(IsNew ? "Add" : "Edit") Species
+            </MudText>
+        </TitleContent>
+
+        <DialogContent>
+            <MudGrid>
+                <MudItem xs="12" Style="padding-top: 12px;">
+                    <MudTextField
+                        Label="Name"
+                        @bind-Value="_species.Name"
+                        For="@(() => _species.Name)"
+                        Immediate="true"/>
+
+                    <MudGrid>
+                        <MudItem xs="6">
+                            <MudTextField
+                                Label="Abbreviation"
+                                @bind-Value="_species.Abbreviation"
+                                For="@(() => _species.Abbreviation)"
+                                Class="mt-3"
+                                Immediate="true"/>
+                        </MudItem>
+
+                        <MudItem xs="6">
+                            <MudSwitch
+                                Label="Is Production Species"
+                                @bind-Value="_species.IsProduction"
+                                For="@(() => _species.IsProduction)"
+                                LabelPlacement="Placement.Start"
+                                Color="Color.Success"
+                                UncheckedColor="Color.Warning"
+                                Class="justify-end"
+                                Style="height: 100%" />
+                        </MudItem>
+                    </MudGrid>
+
+                    <MudTextField
+                        Label="Scientific Name"
+                        @bind-Value="_species.ScientificName"
+                        For="@(() => _species.ScientificName)"
+                        Class="mt-3"
+                        Immediate="true"/>
+
+                    <MudTextField
+                        Label="Country of Origin"
+                        @bind-Value="_species.CountryOfOrigin"
+                        For="@(() => _species.CountryOfOrigin)"
+                        Class="mt-3"
+                        Immediate="true"/>
+
+                    <MudTextField
+                        Label="Janka Hardness"
+                        @bind-Value="_species.JankaHardness"
+                        For="@(() => _species.JankaHardness)"
+                        Class="mt-3"
+                        Immediate="true"/>
+                </MudItem>
+            </MudGrid>
+        </DialogContent>
+
+        <DialogActions>
+            <MudButton OnClick="Cancel">Cancel</MudButton>
+            <MudButton
+                Variant="Variant.Filled"
+                Color="Color.Primary"
+                OnClick="@(async () => await Submit())">
+                Save
+            </MudButton>
+        </DialogActions>
+
+    </MudDialog>
+
+    <MudOverlay Visible="_isLoading" DarkBackground="true" Absolute="true">
+        <MudProgressCircular Color="Color.Secondary" Indeterminate="true" />
+    </MudOverlay>
+</MudForm>
+
+@code {
+    [CascadingParameter]
+    public required IMudDialogInstance MudDialog { get; set; }
+    
+    [Parameter]
+    public int? Id { get; set; }
+    
+    private bool IsNew => Id is null or 0;
+    
+
+    private SpeciesModel _species = new();
+    private MudForm _form = null!;
+    private readonly SpeciesFluentValidator _validator = new();
+    private bool _isLoading;
+
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await LoadSpecies();
+            StateHasChanged();
+        }
+    }
+    
+    private async Task LoadSpecies()
+    {
+        if (Id is null or 0) return;
+        
+        _isLoading = true;
+        var response = await SpeciesService.GetSpeciesById(Id.Value);
+        _isLoading = false;
+        
+        if (response == null)
+        {
+            Snackbar.Add("Failed to load species", Severity.Error);
+            return;
+        }
+        
+        _species = response;
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task Submit()
+    {
+        await _form.Validate();
+
+        if (!_form.IsValid)
+            return;
+        
+        HttpResponseMessage result;
+
+        if (Id is null or 0)
+            result = await SpeciesService.CreateSpecies(_species);
+        else
+            result = await SpeciesService.UpdateSpecies(_species);
+
+        if (!result.IsSuccessStatusCode)
+        {
+            var failedMessage = $"Failed to {(Id is null or 0 ? "add" : "update")} species";
+            Snackbar.Add(failedMessage, Severity.Error);
+            return;
+        }
+
+        var successMessage = $"{_species.Name} " + (Id is null or 0 ? "added" : "updated");
+        Snackbar.Add(successMessage, Severity.Success);
+        
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+}

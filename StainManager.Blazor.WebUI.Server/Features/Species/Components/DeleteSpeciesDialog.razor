@@ -1,0 +1,89 @@
+@using StainManager.Blazor.WebUI.Server.Features.Species.Models
+@using StainManager.Blazor.WebUI.Server.Features.Species.Services
+
+@inject ISpeciesService SpeciesService
+@inject ISnackbar Snackbar
+
+<MudDialog Style="min-width: 400px">
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.Delete" Class="mr-3 mb-n1"/>
+            Delete Species?
+        </MudText>
+    </TitleContent>
+    
+    <DialogContent>
+        <MudTextField 
+            Value="_species.Name" 
+            Label="Name" 
+            ReadOnly="true" />
+        
+        <MudTextField 
+            Value="_species.Abbreviation" 
+            Label="Abbreviation" 
+            Class="mt-3"
+            ReadOnly="true" />
+    </DialogContent>
+    
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Error" Variant="Variant.Filled" OnClick="Delete">Delete</MudButton>
+    </DialogActions>
+</MudDialog>
+
+<MudOverlay Visible="_isLoading" DarkBackground="true" Absolute="true">
+    <MudProgressCircular Color="Color.Secondary" Indeterminate="true" />
+</MudOverlay>
+
+@code {
+    [CascadingParameter]
+    public required IMudDialogInstance MudDialog { get; set; }
+    
+    [Parameter]
+    public int? Id { get; set; }
+    
+    
+    private SpeciesModel _species = new();
+    private bool _isLoading;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await LoadSpecies();
+            StateHasChanged();
+        }
+    }
+    
+    private async Task LoadSpecies()
+    {
+        if (Id is null or 0) return;
+        
+        _isLoading = true;
+        var response = await SpeciesService.GetSpeciesById(Id.Value);
+        _isLoading = false;
+        
+        if (response == null)
+        {
+            Snackbar.Add("Failed to load species", Severity.Error);
+            return;
+        }
+        
+        _species = response;
+    }
+    
+    private void Cancel() => MudDialog.Cancel();
+    
+    private async Task Delete()
+    {
+        var result = await SpeciesService.DeleteSpecies(_species.Id);
+        
+        if (!result.IsSuccessStatusCode)
+        {
+            Snackbar.Add("Failed to delete species", Severity.Error);
+            return;
+        }        
+        
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+}

@@ -11,11 +11,28 @@ public static class SpeciesEndpoints
 {
     public static RouteGroupBuilder MapSpeciesEndpoints(this RouteGroupBuilder group)
     {
-        group.MapGet("/", async (ISender sender, bool isActive = true) 
-            => await sender.Send(new GetSpeciesQuery { IsActive = isActive }));
+        group.MapGet("/", 
+            async (ISender sender, bool isActive = true) =>
+            {
+                var query = new GetSpeciesQuery { IsActive = isActive };
+                var result = await sender.Send(query);
+                
+                return result.Failure 
+                    ? Results.BadRequest(result.Error) 
+                    : Results.Ok(result.Value);
+            });
         
-        group.MapGet("/{id:int}", async (ISender sender, int id) 
-            => await sender.Send(new GetSpeciesByIdQuery { Id = id }));
+        group.MapGet("/{id:int}",
+            async (ISender sender,
+                int id) =>
+            {
+                var query = new GetSpeciesByIdQuery { Id = id };
+                var result = await sender.Send(query);
+                
+                return result.Failure 
+                    ? Results.BadRequest(result.Error) 
+                    : Results.Ok(result.Value);
+            });
 
         group.MapPost("/",
             async (ISender sender,
