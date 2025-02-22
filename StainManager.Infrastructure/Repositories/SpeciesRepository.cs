@@ -23,7 +23,8 @@ public class SpeciesRepository(
         bool isActive = true,
         int pageNumber = 1,
         int pageSize = 10,
-        Sort? sort = null)
+        Sort? sort = null,
+        List<Filter>? filters = null)
     {
         var query = context.Species
             .OrderBy(c => c.Name)
@@ -35,6 +36,7 @@ public class SpeciesRepository(
                 (c.Abbreviation != null && c.Abbreviation.Contains(searchQuery)));
 
         query = query.ApplySorting(sort);
+        query = query.ApplyFilters(filters);
 
         var result = await query.PaginatedListAsync(pageNumber, pageSize);
 

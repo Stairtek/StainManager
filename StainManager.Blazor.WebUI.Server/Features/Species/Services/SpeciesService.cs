@@ -15,7 +15,8 @@ public interface ISpeciesService
         int pageNumber,
         int pageSize,
         bool showDeleted,
-        SortDefinition<SpeciesManagementModel>? sortDefinition = null);
+        SortDefinition<SpeciesManagementModel>? sortDefinition = null,
+        ICollection<IFilterDefinition<SpeciesManagementModel>>? filterDefinitions = null);
 
     Task<SpeciesModel?> GetSpeciesById(int id);
 
@@ -45,7 +46,8 @@ public class SpeciesService(
         int pageNumber,
         int pageSize,
         bool showDeleted,
-        SortDefinition<SpeciesManagementModel>? sortDefinition = null)
+        SortDefinition<SpeciesManagementModel>? sortDefinition = null,
+        ICollection<IFilterDefinition<SpeciesManagementModel>>? filterDefinitions = null)
     {
         var query = $"searchQuery={searchQuery}";
         query += $"&pageNumber={pageNumber}";
@@ -54,6 +56,12 @@ public class SpeciesService(
 
         if (sortDefinition != null)
             query += $"&sort={JsonSerializer.Serialize(sortDefinition.Adapt<Sort>())}";
+
+        if (filterDefinitions != null)
+        {
+            var filters = filterDefinitions.Adapt<List<Filter>>();
+            query += $"&filters={JsonSerializer.Serialize(filters)}";
+        }
 
         return await http.GetFromJsonAsync<PaginatedList<SpeciesManagementModel>>($"{_baseUrl}/management?{query}");
     }

@@ -42,7 +42,8 @@ public class Species : EndpointGroupBase
         bool isActive = true,
         int? pageNumber = null,
         int? pageSize = null,
-        string? sort = null)
+        string? sort = null,
+        string? filters = null)
     {
         var query = new GetSpeciesForManagementQuery
         {
@@ -54,6 +55,9 @@ public class Species : EndpointGroupBase
 
         if (sort is not null)
             query.Sort = JsonSerializer.Deserialize<Sort>(sort);
+
+        if (filters is not null)
+            query.Filters = JsonSerializer.Deserialize<List<Filter>>(filters);
 
         var result = await sender.Send(query);
 

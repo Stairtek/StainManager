@@ -12,7 +12,8 @@ public interface ISpeciesRepository
         bool isActive = true,
         int pageNumber = 1,
         int pageSize = 10,
-        Sort? sort = null);
+        Sort? sort = null,
+        List<Filter>? filters = null);
 
     Task<Species?> GetSpeciesByIdAsync(
         int id,

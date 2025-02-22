@@ -20,7 +20,7 @@
     Striped="true"
     ColumnResizeMode="ResizeMode.Column"
     Filterable="true"
-    FilterMode="DataGridFilterMode.ColumnFilterRow"
+    FilterMode="DataGridFilterMode.Simple"
     Elevation="3">
     <ToolBarContent>
         <MudGrid>
@@ -69,7 +69,7 @@
                         <MudIconButton
                             Icon="@Icons.Material.Filled.AddCircle"
                             Color="Color.Default"
-                            OnClick="e => OpenSpeciesDialog()"/>
+                            OnClick="() => OpenSpeciesDialog()"/>
                     </MudTooltip>
                 </MudPaper>
             </MudItem>
@@ -83,7 +83,10 @@
 
     <Columns>
         <!--#region Edit-->
-        <TemplateColumn Title="Edit" CellStyle="width: 75px">
+        <TemplateColumn
+            Title="Edit"
+            CellStyle="width: 75px"
+            Filterable="false">
             <CellTemplate>
                 @if (!_showDeleted)
                 {
@@ -102,7 +105,8 @@
         <!--#region Thumbnail-->
         <TemplateColumn
             Title="Thumbnail"
-            CellStyle="width: 50px">
+            CellStyle="width: 50px"
+            Filterable="false">
             <CellTemplate>
                 @{
                     var imageSrc = context.Item.ThumbnailImageLocation ?? "images/Image Coming Soon.jpg";
@@ -118,18 +122,24 @@
         </TemplateColumn>
         <!--#endregion Thumbnail-->
 
-        <PropertyColumn Property="c => c.Name" Filterable="@true"/>
+        <PropertyColumn
+            Property="c => c.Name"
+            Filterable="true"/>
 
-        <PropertyColumn Property="c => c.Abbreviation" Filterable="true"/>
+        <PropertyColumn
+            Property="c => c.Abbreviation"
+            Filterable="true"/>
 
         <!--#region Production-->
-        <TemplateColumn Title="Production">
+        <TemplateColumn
+            Title="Production"
+            Filterable="false">
             <CellTemplate>
                 <MudChip
                     T="string"
                     Icon="@(context.Item.IsProduction ? Icons.Material.Filled.Check : Icons.Material.Filled.Close)"
                     Color="@(context.Item.IsProduction ? Color.Success : Color.Error)">
-                    @(context.Item.IsProduction ? "Production" : "Unavialable")
+                    @(context.Item.IsProduction ? "Production" : "Unavailable")
                 </MudChip>
             </CellTemplate>
         </TemplateColumn>
@@ -138,14 +148,15 @@
         <!--#region Delete/Restore-->
         <TemplateColumn
             Title="Delete"
-            CellStyle="width: 75px">
+            CellStyle="width: 75px"
+            Filterable="false">
             <CellTemplate>
                 <MudTooltip Text="Delete Species">
                     <MudFab
                         Color="@(_showDeleted ? Color.Success : Color.Error)"
                         StartIcon="@(_showDeleted ? Icons.Material.Filled.RestoreFromTrash : Icons.Material.Filled.Delete)"
                         Size="Size.Small"
-                        OnClick="async e =>
+                        OnClick="async () =>
                         {
                             if (!_showDeleted)
                                 await OpenDeleteSpeciesDialog(context.Item.Id);
@@ -176,7 +187,8 @@
             state.Page + 1, // 0-based index
             state.PageSize,
             _showDeleted,
-            state.SortDefinitions.FirstOrDefault());
+            state.SortDefinitions.FirstOrDefault(),
+            state.FilterDefinitions);
 
         return new GridData<SpeciesManagementModel>
         {

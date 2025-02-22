@@ -15,6 +15,8 @@ public class GetSpeciesForManagementQuery
     public bool IsActive { get; set; } = true;
 
     public Sort? Sort { get; set; }
+
+    public List<Filter>? Filters { get; set; }
 }
 
 public class GetSpeciesForManagementQueryHandler(
@@ -31,7 +33,8 @@ public class GetSpeciesForManagementQueryHandler(
                 request.IsActive,
                 request.PageNumber,
                 request.PageSize,
-                request.Sort);
+                request.Sort,
+                request.Filters);
         var constructor = typeof(PaginatedList<SpeciesManagementResponse>)
             .GetConstructor([typeof(List<SpeciesManagementResponse>), typeof(int), typeof(int), typeof(int)]);
 
