@@ -1,5 +1,3 @@
-using StainManager.Application.Common.RequestHandling;
-using StainManager.Domain.Common;
 using StainManager.Domain.Species;
 
 namespace StainManager.Application.Species.Commands.RestoreSpecies;
@@ -20,9 +18,9 @@ public class RestoreSpeciesCommandHandler(
     {
         var result = await speciesRepository
             .RestoreSpeciesAsync(request.Id);
-        
-        return !result 
-            ? Result.Fail("Species not found") 
+
+        return !result
+            ? Result.Fail("Species not found")
             : Result.Ok();
     }
 }

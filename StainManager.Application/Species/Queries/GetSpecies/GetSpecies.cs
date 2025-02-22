@@ -1,5 +1,3 @@
-using StainManager.Application.Common.RequestHandling;
-using StainManager.Domain.Common;
 using StainManager.Domain.Species;
 
 namespace StainManager.Application.Species.Queries.GetSpecies;
@@ -21,7 +19,7 @@ public class GetSpeciesQueryHandler(
         var species = await speciesRepository
             .GetAllSpeciesAsync(request.IsActive);
         var response = species.Adapt<List<SpeciesResponse>>();
-        
+
         return response;
     }
 }

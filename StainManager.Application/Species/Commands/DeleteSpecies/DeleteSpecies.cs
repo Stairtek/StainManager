@@ -1,5 +1,3 @@
-using StainManager.Application.Common.RequestHandling;
-using StainManager.Domain.Common;
 using StainManager.Domain.Species;
 
 namespace StainManager.Application.Species.Commands.DeleteSpecies;
@@ -20,9 +18,9 @@ public class DeleteSpeciesCommandHandler(
     {
         var result = await speciesRepository
             .DeleteSpeciesAsync(request.Id);
-        
-        return !result 
-            ? Result.Fail("Species not found") 
+
+        return !result
+            ? Result.Fail("Species not found")
             : Result.Ok();
     }
 }

@@ -1,4 +1,6 @@
+using StainManager.Domain.Common;
 using StainManager.Domain.Species;
+using StainManager.Infrastructure.Extensions;
 
 namespace StainManager.Infrastructure.Repositories;
 
@@ -15,36 +17,49 @@ public class SpeciesRepository(
         return result;
     }
 
-    public async Task<Species?> GetSpeciesByIdAsync(int id, bool includeInactive = false)
+    public async Task<PaginatedList<Species>> GetSpeciesForManagementAsync(
+        bool isActive = true,
+        int pageNumber = 1,
+        int pageSize = 10)
+    {
+        var result = await context.Species
+            .Where(c => c.IsActive == isActive)
+            .PaginatedListAsync(pageNumber, pageSize);
+
+        return result;
+    }
+
+    public async Task<Species?> GetSpeciesByIdAsync(int id,
+        bool includeInactive = false)
     {
         var speciesQuery = context.Species
             .Where(c => c.Id == id);
 
         if (!includeInactive)
             speciesQuery = speciesQuery.Where(c => c.IsActive);
-        
+
         var species = await speciesQuery
             .FirstOrDefaultAsync();
-        
+
         return species;
     }
 
     public async Task<Species> CreateSpeciesAsync(Species species)
     {
         context.Species.Add(species);
-        
+
         await context.SaveChangesAsync();
-        
+
         return species;
     }
 
     public async Task<Species?> UpdateSpeciesAsync(Species species)
     {
         var speciesToUpdate = await GetSpeciesByIdAsync(species.Id);
-        
+
         if (speciesToUpdate == null)
             return null;
-        
+
         speciesToUpdate.UpdatedBy = "System";
         speciesToUpdate.UpdatedDateTime = DateTime.Now;
         speciesToUpdate.Name = species.Name;
@@ -55,41 +70,41 @@ public class SpeciesRepository(
         speciesToUpdate.ScientificName = species.ScientificName;
         speciesToUpdate.CountryOfOrigin = species.CountryOfOrigin;
         speciesToUpdate.JankaHardness = species.JankaHardness;
-        
+
         await context.SaveChangesAsync();
-        
+
         return speciesToUpdate;
     }
 
     public async Task<bool> DeleteSpeciesAsync(int id)
     {
         var speciesToDelete = await GetSpeciesByIdAsync(id);
-        
+
         if (speciesToDelete == null)
             return false;
-        
+
         speciesToDelete.IsActive = false;
         speciesToDelete.UpdatedBy = "System";
         speciesToDelete.UpdatedDateTime = DateTime.Now;
-        
+
         await context.SaveChangesAsync();
-        
+
         return true;
     }
 
     public async Task<bool> RestoreSpeciesAsync(int id)
     {
         var speciesToRestore = await GetSpeciesByIdAsync(id, true);
-        
+
         if (speciesToRestore == null)
             return false;
-        
+
         speciesToRestore.IsActive = true;
         speciesToRestore.UpdatedBy = "System";
         speciesToRestore.UpdatedDateTime = DateTime.Now;
-        
+
         await context.SaveChangesAsync();
-        
+
         return true;
     }
 }

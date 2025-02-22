@@ -1,4 +1,4 @@
-namespace StainManager.Domain.Common;
+namespace StainManager.Application.Common.Models;
 
 public class Result
 {
@@ -9,24 +9,24 @@ public class Result
         Success = success;
         Error = errorMessage;
     }
-    
+
     public bool Success { get; }
-    
+
     public bool Failure => !Success;
-    
+
     public string? Error { get; }
-    
-    
+
+
     public static Result Ok()
     {
         return new Result(true);
     }
-    
+
     public static Result Fail(string errorMessage)
     {
         return new Result(false, errorMessage);
     }
-    
+
     public static Result<T> Ok<T>(T value)
     {
         return new Result<T>(value, true);
@@ -42,7 +42,6 @@ public class Result
         return value != null ? Ok(value) : Fail<T>("Provided value is null");
     }
 }
-
 
 public class Result<T> : Result
 {

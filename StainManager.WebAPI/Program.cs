@@ -10,10 +10,8 @@ builder.Services.AddInfrastructure(builder.Configuration);
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("Blazor.WebUI.Server", policy =>
-    {
-        policy.AllowAnyHeader().AllowAnyMethod().WithOrigins("http://localhost:5146");
-    });
+    options.AddPolicy("Blazor.WebUI.Server",
+        policy => { policy.AllowAnyHeader().AllowAnyMethod().WithOrigins("http://localhost:5146"); });
 });
 
 var app = builder.Build();
