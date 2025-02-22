@@ -1,3 +1,4 @@
+global using System.Text.Json;
 global using MediatR;
 global using Scalar.AspNetCore;
 global using StainManager.Application;

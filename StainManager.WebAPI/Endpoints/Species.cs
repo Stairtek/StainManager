@@ -1,4 +1,3 @@
-using System.Text.Json;
 using StainManager.Application.Species.Commands.CreateSpecies;
 using StainManager.Application.Species.Commands.DeleteSpecies;
 using StainManager.Application.Species.Commands.RestoreSpecies;

@@ -1,7 +1,6 @@
 using System.Globalization;
 using System.Linq.Expressions;
 using System.Text.Json;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using StainManager.Domain.Common;
 
 namespace StainManager.Infrastructure.Extensions;
@@ -34,7 +33,7 @@ public static class QueryableExtensions
 
         var methodName = sort.Value.Descending ? "OrderByDescending" : "OrderBy";
         var resultExpression = Expression.Call(
-            typeof(System.Linq.Queryable), methodName,
+            typeof(Queryable), methodName,
             [typeof(T), propertyInfo.PropertyType],
             query.Expression,
             Expression.Quote(lambda));
@@ -60,12 +59,12 @@ public static class QueryableExtensions
 
             var parameter = Expression.Parameter(typeof(T), "x");
             var property = Expression.Property(parameter, propertyInfo);
-            
+
             var objectValue = GetObjectValue(filter.Value);
-            
+
             if (objectValue == null)
                 continue;
-            
+
             var value = Convert.ChangeType(objectValue, propertyInfo.PropertyType, CultureInfo.InvariantCulture);
             var constant = Expression.Constant(value);
 
