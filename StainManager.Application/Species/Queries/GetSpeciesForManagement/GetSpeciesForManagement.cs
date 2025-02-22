@@ -6,11 +6,15 @@ namespace StainManager.Application.Species.Queries.GetSpeciesForManagement;
 public class GetSpeciesForManagementQuery
     : IQuery<PaginatedList<SpeciesManagementResponse>>
 {
-    public bool IsActive { get; set; } = true;
+    public string? SearchQuery { get; set; }
 
     public int PageNumber { get; init; } = 1;
 
     public int PageSize { get; init; } = 10;
+
+    public bool IsActive { get; set; } = true;
+
+    public Sort? Sort { get; set; }
 }
 
 public class GetSpeciesForManagementQueryHandler(
@@ -23,9 +27,11 @@ public class GetSpeciesForManagementQueryHandler(
     {
         var species = await speciesRepository
             .GetSpeciesForManagementAsync(
+                request.SearchQuery,
                 request.IsActive,
                 request.PageNumber,
-                request.PageSize);
+                request.PageSize,
+                request.Sort);
         var constructor = typeof(PaginatedList<SpeciesManagementResponse>)
             .GetConstructor([typeof(List<SpeciesManagementResponse>), typeof(int), typeof(int), typeof(int)]);
 

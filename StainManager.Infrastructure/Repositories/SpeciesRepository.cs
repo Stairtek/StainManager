@@ -19,13 +19,24 @@ public class SpeciesRepository(
     }
 
     public async Task<PaginatedList<Species>> GetSpeciesForManagementAsync(
+        string? searchQuery = "",
         bool isActive = true,
         int pageNumber = 1,
-        int pageSize = 10)
+        int pageSize = 10,
+        Sort? sort = null)
     {
-        var result = await context.Species
-            .Where(c => c.IsActive == isActive)
-            .PaginatedListAsync(pageNumber, pageSize);
+        var query = context.Species
+            .OrderBy(c => c.Name)
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(searchQuery))
+            query = query.Where(c =>
+                c.Name.Contains(searchQuery) ||
+                (c.Abbreviation != null && c.Abbreviation.Contains(searchQuery)));
+
+        query = query.ApplySorting(sort);
+
+        var result = await query.PaginatedListAsync(pageNumber, pageSize);
 
         return result;
     }

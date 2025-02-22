@@ -19,6 +19,8 @@
     Hover="true"
     Striped="true"
     ColumnResizeMode="ResizeMode.Column"
+    Filterable="true"
+    FilterMode="DataGridFilterMode.ColumnFilterRow"
     Elevation="3">
     <ToolBarContent>
         <MudGrid>
@@ -74,7 +76,7 @@
             <!--#endregion Header Actions-->
         </MudGrid>
     </ToolBarContent>
-    
+
     <NoRecordsContent>
         <MudText Typo="Typo.h6">No Species Found</MudText>
     </NoRecordsContent>
@@ -116,9 +118,9 @@
         </TemplateColumn>
         <!--#endregion Thumbnail-->
 
-        <PropertyColumn Property="c => c.Name"/>
+        <PropertyColumn Property="c => c.Name" Filterable="@true"/>
 
-        <PropertyColumn Property="c => c.Abbreviation"/>
+        <PropertyColumn Property="c => c.Abbreviation" Filterable="true"/>
 
         <!--#region Production-->
         <TemplateColumn Title="Production">
@@ -164,15 +166,17 @@
 @code {
     MudDataGrid<SpeciesManagementModel> _dataGrid = null!;
     private bool _showDeleted;
-    private string _searchText = string.Empty;
+    private string _searchQuery = string.Empty;
 
     private async Task<GridData<SpeciesManagementModel>> LoadSpecies(
         GridState<SpeciesManagementModel> state)
     {
         var speciesManagement = await SpeciesService.GetSpeciesManagement(
+            _searchQuery,
             state.Page + 1, // 0-based index
             state.PageSize,
-            _showDeleted);
+            _showDeleted,
+            state.SortDefinitions.FirstOrDefault());
 
         return new GridData<SpeciesManagementModel>
         {
@@ -183,7 +187,7 @@
 
     private Task OnSearch(string searchText)
     {
-        _searchText = searchText;
+        _searchQuery = searchText;
         return _dataGrid.ReloadServerData();
     }
 

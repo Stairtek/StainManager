@@ -1,3 +1,4 @@
+using System.Text.Json;
 using StainManager.Application.Species.Commands.CreateSpecies;
 using StainManager.Application.Species.Commands.DeleteSpecies;
 using StainManager.Application.Species.Commands.RestoreSpecies;
@@ -5,6 +6,7 @@ using StainManager.Application.Species.Commands.UpdateSpecies;
 using StainManager.Application.Species.Queries.GetSpecies;
 using StainManager.Application.Species.Queries.GetSpeciesById;
 using StainManager.Application.Species.Queries.GetSpeciesForManagement;
+using StainManager.Domain.Common;
 
 namespace StainManager.WebAPI.Endpoints;
 
@@ -36,16 +38,23 @@ public class Species : EndpointGroupBase
 
     public async Task<IResult> GetSpeciesForManagement(
         ISender sender,
+        string searchQuery = "",
         bool isActive = true,
         int? pageNumber = null,
-        int? pageSize = null)
+        int? pageSize = null,
+        string? sort = null)
     {
         var query = new GetSpeciesForManagementQuery
         {
-            IsActive = isActive,
+            SearchQuery = searchQuery,
             PageNumber = pageNumber is null or < 1 ? 1 : pageNumber.Value,
-            PageSize = pageSize ?? 10
+            PageSize = pageSize ?? 10,
+            IsActive = isActive
         };
+
+        if (sort is not null)
+            query.Sort = JsonSerializer.Deserialize<Sort>(sort);
+
         var result = await sender.Send(query);
 
         return result.Failure

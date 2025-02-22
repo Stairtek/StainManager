@@ -1,3 +1,6 @@
+using System.Text.Json;
+using Mapster;
+using MudBlazor;
 using StainManager.Blazor.WebUI.Server.Common.Models;
 using StainManager.Blazor.WebUI.Server.Features.Species.Models;
 
@@ -8,9 +11,11 @@ public interface ISpeciesService
     Task<List<SpeciesModel>?> GetSpecies(bool showDeleted = false);
 
     Task<PaginatedList<SpeciesManagementModel>?> GetSpeciesManagement(
+        string searchQuery,
         int pageNumber,
         int pageSize,
-        bool showDeleted);
+        bool showDeleted,
+        SortDefinition<SpeciesManagementModel>? sortDefinition = null);
 
     Task<SpeciesModel?> GetSpeciesById(int id);
 
@@ -36,13 +41,19 @@ public class SpeciesService(
     }
 
     public async Task<PaginatedList<SpeciesManagementModel>?> GetSpeciesManagement(
+        string searchQuery,
         int pageNumber,
         int pageSize,
-        bool showDeleted)
+        bool showDeleted,
+        SortDefinition<SpeciesManagementModel>? sortDefinition = null)
     {
-        var query = $"pageNumber={pageNumber}";
+        var query = $"searchQuery={searchQuery}";
+        query += $"&pageNumber={pageNumber}";
         query += $"&pageSize={pageSize}";
         query += $"&isActive={!showDeleted}";
+
+        if (sortDefinition != null)
+            query += $"&sort={JsonSerializer.Serialize(sortDefinition.Adapt<Sort>())}";
 
         return await http.GetFromJsonAsync<PaginatedList<SpeciesManagementModel>>($"{_baseUrl}/management?{query}");
     }

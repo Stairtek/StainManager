@@ -8,9 +8,11 @@ public interface ISpeciesRepository
         bool isActive = true);
 
     Task<PaginatedList<Species>> GetSpeciesForManagementAsync(
+        string? searchQuery = "",
         bool isActive = true,
         int pageNumber = 1,
-        int pageSize = 10);
+        int pageSize = 10,
+        Sort? sort = null);
 
     Task<Species?> GetSpeciesByIdAsync(
         int id,
