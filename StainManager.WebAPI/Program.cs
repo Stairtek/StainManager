@@ -1,32 +1,22 @@
-using StainManager.WebAPI.Endpoints;
-
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
-
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("Blazor.WebUI.Server",
-        policy => { policy.AllowAnyHeader().AllowAnyMethod().WithOrigins("http://localhost:5146"); });
-});
+builder.Services.AddWebServices();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.MapScalarApiReference();
-    app.MapOpenApi();
-}
+app.MapOpenApi();
+app.MapScalarApiReference();
 
-app.UseCors("Blazor.WebUI.Server");
+app.UseExceptionHandler(options => { });
 
 app.UseHttpsRedirection();
 
+app.MapControllers();
+
 app.MapEndpoints();
+
+app.UseRouting();
 
 app.Run();

@@ -1,3 +1,4 @@
+using Ardalis.GuardClauses;
 using StainManager.Domain.Common;
 using StainManager.Domain.Species;
 using StainManager.Infrastructure.Extensions;
@@ -53,12 +54,11 @@ public class SpeciesRepository(
         return species;
     }
 
-    public async Task<Species?> UpdateSpeciesAsync(Species species)
+    public async Task<Species> UpdateSpeciesAsync(Species species)
     {
         var speciesToUpdate = await GetSpeciesByIdAsync(species.Id);
 
-        if (speciesToUpdate == null)
-            return null;
+        Guard.Against.NotFound(species.Id, speciesToUpdate);
 
         speciesToUpdate.UpdatedBy = "System";
         speciesToUpdate.UpdatedDateTime = DateTime.Now;
@@ -80,24 +80,20 @@ public class SpeciesRepository(
     {
         var speciesToDelete = await GetSpeciesByIdAsync(id);
 
-        if (speciesToDelete == null)
-            return false;
+        Guard.Against.NotFound(id, speciesToDelete);
 
         speciesToDelete.IsActive = false;
         speciesToDelete.UpdatedBy = "System";
         speciesToDelete.UpdatedDateTime = DateTime.Now;
 
-        await context.SaveChangesAsync();
-
-        return true;
+        return await context.SaveChangesAsync() > 0;
     }
 
     public async Task<bool> RestoreSpeciesAsync(int id)
     {
         var speciesToRestore = await GetSpeciesByIdAsync(id, true);
 
-        if (speciesToRestore == null)
-            return false;
+        Guard.Against.NotFound(id, speciesToRestore);
 
         speciesToRestore.IsActive = true;
         speciesToRestore.UpdatedBy = "System";
@@ -105,6 +101,6 @@ public class SpeciesRepository(
 
         await context.SaveChangesAsync();
 
-        return true;
+        return await context.SaveChangesAsync() > 0;
     }
 }

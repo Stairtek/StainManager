@@ -18,7 +18,7 @@ public interface ISpeciesRepository
 
     Task<Species> CreateSpeciesAsync(Species species);
 
-    Task<Species?> UpdateSpeciesAsync(Species species);
+    Task<Species> UpdateSpeciesAsync(Species species);
 
     Task<bool> DeleteSpeciesAsync(int id);
 

@@ -20,7 +20,7 @@ public class DeleteSpeciesCommandHandler(
             .DeleteSpeciesAsync(request.Id);
 
         return !result
-            ? Result.Fail("Species not found")
+            ? Result.Fail("Failed to delete species")
             : Result.Ok();
     }
 }
