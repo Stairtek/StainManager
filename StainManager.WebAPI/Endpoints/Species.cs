@@ -38,9 +38,9 @@ public class Species : EndpointGroupBase
     public async Task<IResult> GetSpeciesForManagement(
         ISender sender,
         string searchQuery = "",
-        bool isActive = true,
         int? pageNumber = null,
         int? pageSize = null,
+        bool isActive = true,
         string? sort = null,
         string? filters = null)
     {

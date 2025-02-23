@@ -18,13 +18,14 @@ public class SpeciesRepository(
 
     public async Task<PaginatedList<Species>> GetSpeciesForManagementAsync(
         string? searchQuery = "",
-        bool isActive = true,
         int pageNumber = 1,
         int pageSize = 10,
+        bool isActive = true,
         Sort? sort = null,
         List<Filter>? filters = null)
     {
         var query = context.Species
+            .Where(c => c.IsActive == isActive)
             .OrderBy(c => c.Name)
             .AsQueryable();
 

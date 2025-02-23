@@ -30,9 +30,9 @@ public class GetSpeciesForManagementQueryHandler(
         var species = await speciesRepository
             .GetSpeciesForManagementAsync(
                 request.SearchQuery,
-                request.IsActive,
                 request.PageNumber,
                 request.PageSize,
+                request.IsActive,
                 request.Sort,
                 request.Filters);
         var constructor = typeof(PaginatedList<SpeciesManagementResponse>)
