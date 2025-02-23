@@ -1,7 +1,7 @@
-using System.Globalization;
 using System.Linq.Expressions;
 using System.Text.Json;
 using StainManager.Domain.Common;
+using StainManager.Infrastructure.Extensions.Filtering;
 
 namespace StainManager.Infrastructure.Extensions;
 
@@ -48,46 +48,11 @@ public static class QueryableExtensions
         if (filters == null || filters.Count == 0)
             return query;
 
-        foreach (var filter in filters)
-        {
-            if (filter.Title == null || filter.Value == null || filter.Operator == null)
-                continue;
-
-            var propertyInfo = typeof(T).GetProperty(filter.Title);
-            if (propertyInfo == null)
-                continue;
-
-            var parameter = Expression.Parameter(typeof(T), "x");
-            var property = Expression.Property(parameter, propertyInfo);
-
-            var objectValue = GetObjectValue(filter.Value);
-
-            if (objectValue == null)
-                continue;
-
-            var value = Convert.ChangeType(objectValue, propertyInfo.PropertyType, CultureInfo.InvariantCulture);
-            var constant = Expression.Constant(value);
-
-            var comparison = Expression.Call(property, filter.Operator, null, constant);
-            var lambda = Expression.Lambda<Func<T, bool>>(comparison, parameter);
-
-            query = query.Where(lambda);
-        }
-
-        return query;
-    }
-
-    private static object? GetObjectValue(object obj)
-    {
-        var typeOfObject = ((JsonElement)obj).ValueKind;
-
-        return typeOfObject switch
-        {
-            JsonValueKind.Number => ((JsonElement)obj).GetInt32(),
-            JsonValueKind.String => ((JsonElement)obj).GetString()!,
-            JsonValueKind.True => true,
-            JsonValueKind.False => false,
-            _ => null
-        };
+        return filters
+            .Select(FilterExpressionGenerator.GenerateExpression<T>)
+            .Aggregate(
+                query, 
+                (current, filterExpression) => 
+                    current.Where(filterExpression));
     }
 }

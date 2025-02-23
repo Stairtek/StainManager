@@ -57,7 +57,7 @@ public class SpeciesService(
         if (sortDefinition != null)
             query += $"&sort={JsonSerializer.Serialize(sortDefinition.Adapt<Sort>())}";
 
-        if (filterDefinitions != null)
+        if (filterDefinitions != null && filterDefinitions.Count != 0)
         {
             var filters = filterDefinitions.Adapt<List<Filter>>();
             query += $"&filters={JsonSerializer.Serialize(filters)}";
