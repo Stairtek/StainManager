@@ -29,10 +29,12 @@
 
                     <MudTextField
                         T="string"
-                        ValueChanged="@(s => OnSearch(s))"
+                        Value="@_searchQuery"
+                        ValueChanged="OnSearch"
+                        ValueExpression="@(() => _searchQuery)"
+                        Immediate="true"
                         Placeholder="Search"
                         Adornment="Adornment.Start"
-                        Immediate="true"
                         AdornmentIcon="@Icons.Material.Filled.Search"
                         IconSize="Size.Medium"
                         Class="ml-5"/>
@@ -53,6 +55,10 @@
                             Icon="@(_showDeleted ? Icons.Material.Filled.RemoveRedEye : Icons.Material.Outlined.RemoveRedEye)"
                             Color="@(_showDeleted ? Color.Error : Color.Default)"
                             OnClick="OnToggleShowDeleted"/>
+                    </MudTooltip>
+
+                    <MudTooltip Text="Reset">
+                        <MudIconButton Icon="@Icons.Material.Filled.Loop" Color="Color.Default" OnClick="OnReset"/>
                     </MudTooltip>
 
                     <MudTooltip Text="Refresh">
@@ -194,18 +200,31 @@
     private Task OnSearch(string searchText)
     {
         _searchQuery = searchText;
-        return _dataGrid.ReloadServerData();
+        _dataGrid.ReloadServerData();
+        return Task.CompletedTask;
+    }
+
+    private Task OnReset()
+    {
+        _searchQuery = string.Empty;
+        _showDeleted = false;
+        _dataGrid.ClearFiltersAsync();
+        _dataGrid.ReloadServerData();
+        
+        return Task.CompletedTask;
     }
 
     private Task OnRefresh()
     {
-        return _dataGrid.ReloadServerData();
+        _dataGrid.ReloadServerData();
+        return Task.CompletedTask;
     }
 
     private Task OnToggleShowDeleted()
     {
         _showDeleted = !_showDeleted;
-        return _dataGrid.ReloadServerData();
+        _dataGrid.ReloadServerData();
+        return Task.CompletedTask;
     }
 
     private async Task OpenSpeciesDialog(int? id = null)
