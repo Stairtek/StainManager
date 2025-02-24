@@ -1,0 +1,7 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Debug All" type="CompoundRunConfigurationType">
+    <toRun name="StainManager.Blazor.WebUI.Server: http" type="LaunchSettings" />
+    <toRun name="StainManager.WebAPI: http" type="LaunchSettings" />
+    <method v="2" />
+  </configuration>
+</component>

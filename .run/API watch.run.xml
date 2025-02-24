@@ -1,0 +1,13 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="API watch" type="RunDotNetWatch" factoryName="RunDotNetWatch">
+    <option name="exePath" value="$PROJECT_DIR$/StainManager.Blazor.WebUI.Server/bin/Debug/net9.0/StainManager.Blazor.WebUI.Server.exe" />
+    <option name="programParameters" value="" />
+    <option name="projectFilePath" value="$PROJECT_DIR$/StainManager.Blazor.WebUI.Server/StainManager.Blazor.WebUI.Server.csproj" />
+    <option name="projectTfm" value="net9.0" />
+    <option name="restartOnRudeEditEditor" value="true" />
+    <option name="suppressBrowserLaunch" value="true" />
+    <option name="watchParameters" value="run" />
+    <option name="workingDirectory" value="$PROJECT_DIR$/StainManager.Blazor.WebUI.Server" />
+    <method v="2" />
+  </configuration>
+</component>

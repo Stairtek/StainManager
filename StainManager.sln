@@ -48,4 +48,6 @@ Global
 		{1DF1D253-2939-46E7-8998-FB51C6B75C9C} = {1CAB8894-EF5E-4C6D-B90F-68F69AD61C06}
 		{83B9BE45-1ADE-4780-85A7-0FBAED3790EB} = {67AA26B3-286D-4F9D-8190-B6131F0E27B4}
 	EndGlobalSection
+	GlobalSection(RiderSharedRunConfigurations) = postSolution
+	EndGlobalSection
 EndGlobal

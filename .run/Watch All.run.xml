@@ -1,0 +1,7 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Watch All" type="CompoundRunConfigurationType">
+    <toRun name="API watch" type="RunDotNetWatch" />
+    <toRun name="WebUI watch" type="RunDotNetWatch" />
+    <method v="2" />
+  </configuration>
+</component>
