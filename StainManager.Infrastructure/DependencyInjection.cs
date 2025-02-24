@@ -1,5 +1,8 @@
+using Amazon.S3;
+using StainManager.Application.Services;
 using StainManager.Domain.Species;
 using StainManager.Infrastructure.Repositories;
+using StainManager.Infrastructure.Services.S3;
 
 namespace StainManager.Infrastructure;
 
@@ -15,6 +18,9 @@ public static class DependencyInjection
         });
 
         services.AddScoped<ISpeciesRepository, SpeciesRepository>();
+
+        services.AddSingleton<IAmazonS3, AmazonS3Client>();
+        services.AddScoped<IImageService, ImageService>();
 
         return services;
     }

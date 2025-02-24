@@ -210,7 +210,7 @@
         _showDeleted = false;
         _dataGrid.ClearFiltersAsync();
         _dataGrid.ReloadServerData();
-        
+
         return Task.CompletedTask;
     }
 
@@ -236,7 +236,7 @@
         var options = new DialogOptions
         {
             Position = DialogPosition.TopCenter,
-            MaxWidth = MaxWidth.Small,
+            MaxWidth = MaxWidth.Medium,
             FullWidth = true,
             CloseButton = true
         };

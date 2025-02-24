@@ -1,5 +1,6 @@
-using StainManager.Blazor.WebUI.Server;
 using MudBlazor.Services;
+using StainManager.Blazor.WebUI.Server;
+using StainManager.Blazor.WebUI.Server.Features.Shared.Services;
 using StainManager.Blazor.WebUI.Server.Features.Species.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -9,6 +10,7 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddMudServices();
+builder.Services.AddLogging();
 
 builder.Services.AddScoped(sp => new HttpClient
 {
@@ -16,19 +18,23 @@ builder.Services.AddScoped(sp => new HttpClient
 });
 
 builder.Services.AddScoped<ISpeciesService, SpeciesService>();
+builder.Services.AddScoped<ITempImageService, TempImageService>();
+
+builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Error", createScopeForErrors: true);
+    app.UseExceptionHandler("/Error", true);
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
 app.UseHttpsRedirection();
 
+app.UseAntiforgery();
 
 app.UseAntiforgery();
 

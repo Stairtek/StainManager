@@ -8,6 +8,8 @@ public static class DependencyInjection
 
         services.AddOpenApi();
         services.AddControllers();
+        services.AddAntiforgery();
+        services.AddHttpContextAccessor();
 
         return services;
     }

@@ -13,10 +13,12 @@ app.UseExceptionHandler(options => { });
 
 app.UseHttpsRedirection();
 
+app.UseRouting();
+
+app.UseAntiforgery();
+
 app.MapControllers();
 
 app.MapEndpoints();
-
-app.UseRouting();
 
 app.Run();

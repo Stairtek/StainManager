@@ -1,6 +1,7 @@
-﻿<Router AppAssembly="typeof(Program).Assembly">
+﻿@using StainManager.Blazor.WebUI.Server.Features.Shared.Components
+<Router AppAssembly="typeof(Program).Assembly">
     <Found Context="routeData">
-        <RouteView RouteData="routeData" DefaultLayout="typeof(Features.Shared.MainLayout)"/>
+        <RouteView RouteData="routeData" DefaultLayout="typeof(MainLayout)"/>
         <FocusOnNavigate RouteData="routeData" Selector="h1"/>
     </Found>
 </Router>

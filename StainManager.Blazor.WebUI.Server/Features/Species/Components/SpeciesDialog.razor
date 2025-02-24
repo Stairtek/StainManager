@@ -1,7 +1,8 @@
+@using StainManager.Blazor.WebUI.Server.Features.Shared.Services
 @using StainManager.Blazor.WebUI.Server.Features.Species.Models
 @using StainManager.Blazor.WebUI.Server.Features.Species.Services
-
 @inject ISpeciesService SpeciesService
+@inject ITempImageService TempImageService
 @inject ISnackbar Snackbar
 
 <MudForm
@@ -9,7 +10,7 @@
     @ref="_form"
     Validation="@(_validator.ValidateValue)"
     ValidationDelay="0">
-    
+
     <MudDialog>
         <TitleContent>
             <MudText Typo="Typo.h6">
@@ -22,7 +23,7 @@
 
         <DialogContent>
             <MudGrid>
-                <MudItem xs="12" Style="padding-top: 12px;">
+                <MudItem xs="6" Style="padding-top: 12px;">
                     <MudTextField
                         Label="Name"
                         @bind-Value="_species.Name"
@@ -48,7 +49,7 @@
                                 Color="Color.Success"
                                 UncheckedColor="Color.Warning"
                                 Class="justify-end"
-                                Style="height: 100%" />
+                                Style="height: 100%"/>
                         </MudItem>
                     </MudGrid>
 
@@ -73,6 +74,32 @@
                         Class="mt-3"
                         Immediate="true"/>
                 </MudItem>
+
+                <MudItem xs="6">
+                    <MudFileUpload
+                        T="IBrowserFile"
+                        FilesChanged="UploadFiles"
+                        AcceptedFileTypes="image/*">
+                        <ActivatorContent>
+                            <MudButton
+                                Variant="Variant.Filled"
+                                Color="Color.Primary"
+                                StartIcon="@Icons.Material.Filled.CloudUpload">
+                                Upload Image
+                            </MudButton>
+                        </ActivatorContent>
+                        <SelectedTemplate>
+                            @if (context != null)
+                            {
+                                <MudText>@context.Name</MudText>
+                            }
+                            else
+                            {
+                                <MudText>No file selected</MudText>
+                            }
+                        </SelectedTemplate>
+                    </MudFileUpload>
+                </MudItem>
             </MudGrid>
         </DialogContent>
 
@@ -89,19 +116,20 @@
     </MudDialog>
 
     <MudOverlay Visible="_isLoading" DarkBackground="true" Absolute="true">
-        <MudProgressCircular Color="Color.Secondary" Indeterminate="true" />
+        <MudProgressCircular Color="Color.Secondary" Indeterminate="true"/>
     </MudOverlay>
 </MudForm>
 
 @code {
+
     [CascadingParameter]
     public required IMudDialogInstance MudDialog { get; set; }
-    
+
     [Parameter]
     public int? Id { get; set; }
-    
+
     private bool IsNew => Id is null or 0;
-    
+
 
     private SpeciesModel _species = new();
     private MudForm _form = null!;
@@ -117,25 +145,49 @@
             StateHasChanged();
         }
     }
-    
+
     private async Task LoadSpecies()
     {
         if (Id is null or 0) return;
-        
+
         _isLoading = true;
         var response = await SpeciesService.GetSpeciesById(Id.Value);
         _isLoading = false;
-        
+
         if (response == null)
         {
             Snackbar.Add("Failed to load species", Severity.Error);
             return;
         }
-        
+
         _species = response;
     }
 
-    private void Cancel() => MudDialog.Cancel();
+    private async Task UploadFiles(IBrowserFile file)
+    {
+        // Validate file type
+        if (!file.ContentType.StartsWith("image/"))
+        {
+            Snackbar.Add("Only image files are allowed.", Severity.Error);
+            return;
+        }
+
+        // Validate file size (e.g., max 10 MB)
+        const long maxFileSize = 10 * 1024 * 1024;
+        if (file.Size > maxFileSize)
+        {
+            Snackbar.Add("File size exceeds the 10 MB limit.", Severity.Error);
+            return;
+        }
+
+        var result = await TempImageService.UploadTempImageAsync(file);
+        Console.Write(result);
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
 
     private async Task Submit()
     {
@@ -143,7 +195,7 @@
 
         if (!_form.IsValid)
             return;
-        
+
         HttpResponseMessage result;
 
         if (Id is null or 0)
@@ -160,7 +212,8 @@
 
         var successMessage = $"{_species.Name} " + (Id is null or 0 ? "added" : "updated");
         Snackbar.Add(successMessage, Severity.Success);
-        
+
         MudDialog.Close(DialogResult.Ok(true));
     }
+
 }
