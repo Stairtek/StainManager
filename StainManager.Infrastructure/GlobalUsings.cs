@@ -3,3 +3,4 @@ global using Microsoft.EntityFrameworkCore;
 global using Microsoft.Extensions.Configuration;
 global using Microsoft.Extensions.DependencyInjection;
 global using StainManager.Infrastructure.Extensions;
+global using StainManager.Infrastructure.Helpers;

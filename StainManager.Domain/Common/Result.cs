@@ -1,4 +1,4 @@
-namespace StainManager.Application.Common.Models;
+namespace StainManager.Domain.Common;
 
 public class Result
 {

@@ -1,4 +1,5 @@
 using StainManager.Application.Services;
+using StainManager.Domain.Common;
 using StainManager.Domain.Species;
 
 namespace StainManager.Application.Species.Commands.UpdateSpecies;
@@ -57,7 +58,6 @@ public class UpdateSpeciesCommandHandler(
 
         var result = await speciesRepository.UpdateSpeciesAsync(updatedSpecies);
 
-        return result?.Adapt<SpeciesResponse>()
-               ?? Result.Fail<SpeciesResponse?>("Species not found");
+        return result.Adapt<SpeciesResponse>();
     }
 }

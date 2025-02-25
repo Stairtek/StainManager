@@ -25,10 +25,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Folder Include="Abstractions\"/>
-    </ItemGroup>
-
-    <ItemGroup>
         <Reference Include="Microsoft.AspNetCore.Http.Features">
             <HintPath>..\..\..\..\Program Files\dotnet\shared\Microsoft.AspNetCore.App\9.0.0\Microsoft.AspNetCore.Http.Features.dll</HintPath>
         </Reference>

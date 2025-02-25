@@ -1,11 +1,8 @@
 using Amazon;
 using Amazon.S3;
 using Amazon.S3.Model;
-
-using StainManager.Application.Common.Models;
 using StainManager.Application.Services;
 using StainManager.Domain.Common;
-using StainManager.Infrastructure.Helpers;
 
 namespace StainManager.Infrastructure.Services.S3;
 
