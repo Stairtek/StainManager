@@ -24,7 +24,6 @@
     <ItemGroup>
         <Folder Include="Common\Extensions\"/>
         <Folder Include="Common\Models\"/>
-        <Folder Include="Species\Commands\UploadSpeciesImage\"/>
     </ItemGroup>
 
     <ItemGroup>

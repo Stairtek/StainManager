@@ -1,4 +1,3 @@
-using Amazon.S3.Model;
 using StainManager.Domain.Common;
 
 namespace StainManager.Application.Services;
@@ -10,8 +9,9 @@ public interface IImageService
         Guid id,
         string imageContent);
 
-    Task<Result<string>> MoveTempImageAsync(
-        string tempImageFileKey,
+    Task<Result<ImageMoveResult>> MoveImagesAsync(
+        string? fullImageLocation,
+        string? thumbnailImageLocation,
         string directory,
         int id);
 }

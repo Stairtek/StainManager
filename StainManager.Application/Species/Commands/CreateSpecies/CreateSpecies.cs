@@ -34,38 +34,30 @@ public class CreateSpeciesCommandHandler(
     {
         var newSpecies = request.Adapt<Domain.Species.Species>();
         var species = await speciesRepository.CreateSpeciesAsync(newSpecies);
+
+        if (species.FullImageLocation is null || species.ThumbnailImageLocation is null) 
+            return species.Adapt<SpeciesResponse>();
         
-        if (species.FullImageLocation is not null && 
-            species.ThumbnailImageLocation is not null)
-        {
-            var moveFullImageResult = await imageService.MoveTempImageAsync(
-                species.FullImageLocation,
-                "species",
-                species.Id);
-                
-            if (moveFullImageResult.Failure)
-                return Result.Fail<SpeciesResponse>(moveFullImageResult.Error);
-            
-            var moveThumbnailImageResult = await imageService.MoveTempImageAsync(
-                species.ThumbnailImageLocation,
-                "species",
-                species.Id);
-            
-            if (moveThumbnailImageResult.Failure)
-                return Result.Fail<SpeciesResponse>(moveThumbnailImageResult.Error);
-            
-            species.FullImageLocation = moveFullImageResult.Value;
-            species.ThumbnailImageLocation = moveThumbnailImageResult.Value;
-            
-            var updateSpeciesResult = await speciesRepository.UpdateSpeciesImageLocationsAsync(
-                species.Id,
-                species.FullImageLocation,
-                species.ThumbnailImageLocation);
-            
-            if (updateSpeciesResult is false)
-                return Result.Fail<SpeciesResponse>("Failed to update species image locations");
-        }
+        var moveImagesResult = await imageService.MoveImagesAsync(
+            species.FullImageLocation,
+            species.ThumbnailImageLocation,
+            "species",
+            species.Id);
         
+        if (moveImagesResult.Failure)
+            return Result.Fail<SpeciesResponse>(moveImagesResult.Error);
+        
+        species.FullImageLocation = moveImagesResult.Value?.FullImageLocation;
+        species.ThumbnailImageLocation = moveImagesResult.Value?.ThumbnailImageLocation;
+            
+        var updateSpeciesResult = await speciesRepository.UpdateSpeciesImageLocationsAsync(
+            species.Id,
+            species.FullImageLocation,
+            species.ThumbnailImageLocation);
+            
+        if (updateSpeciesResult is false)
+            return Result.Fail<SpeciesResponse>("Failed to update species image locations");
+
         return species.Adapt<SpeciesResponse>();
     }
 }

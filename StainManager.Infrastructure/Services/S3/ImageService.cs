@@ -69,37 +69,87 @@ public class ImageService(
             : Result.Fail("Failed to upload to S3");
     }
 
-    public async Task<Result<string>> MoveTempImageAsync(
-        string tempImageURL,
+    public async Task<Result<ImageMoveResult>> MoveImagesAsync(
+        string? fullImageLocation,
+        string? thumbnailImageLocation,
         string directory,
         int id)
     {
-        var tempImageFileKey = tempImageURL.Replace(FileKeyPrefixURL, string.Empty);
-        var newFileKey = $"{MainDirectory}/{directory}/{id}.jpg";
-        var copyRequest = new CopyObjectRequest
+        if (fullImageLocation is null || thumbnailImageLocation is null)
+            return Result.Fail<ImageMoveResult>("Image Locations cannot be null");
+        
+        var moveFullImageResult = await MoveTempImageAsync(
+            fullImageLocation,
+            directory,
+            id);
+        
+        if (moveFullImageResult.Failure)
+            return Result.Fail<ImageMoveResult>(moveFullImageResult.Error);
+        
+        var moveThumbnailImageResult = await MoveTempImageAsync(
+            thumbnailImageLocation,
+            directory,
+            id,
+            true);
+
+        if (moveThumbnailImageResult.Failure)
+            return Result.Fail<ImageMoveResult>(moveThumbnailImageResult.Error);
+        
+        var result = new ImageMoveResult
         {
-            SourceBucket = BucketName,
-            SourceKey = tempImageFileKey,
-            DestinationBucket = BucketName,
-            DestinationKey = newFileKey
+            FullImageLocation = moveFullImageResult.Value ?? "",
+            ThumbnailImageLocation = moveThumbnailImageResult.Value ?? ""
         };
         
-        var copyResponse = await s3Client.CopyObjectAsync(copyRequest);
-        
-        if (copyResponse.HttpStatusCode != System.Net.HttpStatusCode.OK)
-            return Result.Fail<string>("Failed to copy image to new location");
-        
-        var deleteRequest = new DeleteObjectRequest
+        return Result.Ok(result);
+    }
+
+    private async Task<Result<string>> MoveTempImageAsync(
+        string? tempImageURL,
+        string directory,
+        int id,
+        bool isThumbnail = false)
+    {
+        try
         {
-            BucketName = BucketName,
-            Key = tempImageFileKey
-        };
-        
-        var deleteResponse = await s3Client.DeleteObjectAsync(deleteRequest);
-        
-        if (deleteResponse.HttpStatusCode != System.Net.HttpStatusCode.NoContent)
-            return Result.Fail<string>("Failed to delete temporary image");
-        
-        return Result.Ok(newFileKey);
+            if (tempImageURL is null)
+                return Result.Fail<string>("Temporary image URL is null");
+            
+            var tempImageFileKey = tempImageURL.Replace(FileKeyPrefixURL, string.Empty);
+            var newFileKey = $"{MainDirectory}/{directory}/{id}.jpg";
+            
+            if (isThumbnail)
+                newFileKey = $"{MainDirectory}/{directory}/{id}_thumbnail.jpg";
+            
+            var copyRequest = new CopyObjectRequest
+            {
+                SourceBucket = BucketName,
+                SourceKey = tempImageFileKey,
+                DestinationBucket = BucketName,
+                DestinationKey = newFileKey
+            };
+            
+            var copyResponse = await s3Client.CopyObjectAsync(copyRequest);
+            
+            if (copyResponse.HttpStatusCode != System.Net.HttpStatusCode.OK)
+                return Result.Fail<string>("Failed to copy image to new location");
+            
+            var deleteRequest = new DeleteObjectRequest
+            {
+                BucketName = BucketName,
+                Key = tempImageFileKey
+            };
+            
+            var deleteResponse = await s3Client.DeleteObjectAsync(deleteRequest);
+            
+            if (deleteResponse.HttpStatusCode != System.Net.HttpStatusCode.NoContent)
+                return Result.Fail<string>("Failed to delete temporary image");
+            
+            return Result.Ok($"{FileKeyPrefixURL}{newFileKey}");
+        }
+        catch (Exception ex)
+        {
+            return Result.Fail<string>($"Error moving image: {ex.Message}");
+        }
     }
 }

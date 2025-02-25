@@ -1,3 +1,4 @@
+using StainManager.Application.Services;
 using StainManager.Domain.Species;
 
 namespace StainManager.Application.Species.Commands.UpdateSpecies;
@@ -25,7 +26,8 @@ public class UpdateSpeciesCommand
 }
 
 public class UpdateSpeciesCommandHandler(
-    ISpeciesRepository speciesRepository)
+    ISpeciesRepository speciesRepository,
+    IImageService imageService)
     : ICommandHandler<UpdateSpeciesCommand, SpeciesResponse?>
 {
     public async Task<Result<SpeciesResponse?>> Handle(
@@ -33,6 +35,25 @@ public class UpdateSpeciesCommandHandler(
         CancellationToken cancellationToken)
     {
         var updatedSpecies = request.Adapt<Domain.Species.Species>();
+        
+        var hasTempImages =
+            updatedSpecies.FullImageLocation?.Contains("temp") == true || 
+            updatedSpecies.ThumbnailImageLocation?.Contains("temp") == true;
+
+        if (hasTempImages)
+        {
+            var moveImagesResult = await imageService.MoveImagesAsync(
+                updatedSpecies.FullImageLocation,
+                updatedSpecies.ThumbnailImageLocation,
+                "species",
+                updatedSpecies.Id);
+        
+            if (moveImagesResult.Failure)
+                return Result.Fail<SpeciesResponse?>(moveImagesResult.Error);
+            
+            updatedSpecies.FullImageLocation = moveImagesResult.Value?.FullImageLocation;
+            updatedSpecies.ThumbnailImageLocation = moveImagesResult.Value?.ThumbnailImageLocation;
+        }
 
         var result = await speciesRepository.UpdateSpeciesAsync(updatedSpecies);
 
