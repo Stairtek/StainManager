@@ -78,7 +78,7 @@
                 <MudItem xs="6">
                     <MudFileUpload
                         T="IBrowserFile"
-                        FilesChanged="UploadFiles"
+                        FilesChanged="UploadImage"
                         AcceptedFileTypes="image/*">
                         <ActivatorContent>
                             <MudButton
@@ -88,17 +88,17 @@
                                 Upload Image
                             </MudButton>
                         </ActivatorContent>
-                        <SelectedTemplate>
-                            @if (context != null)
-                            {
-                                <MudText>@context.Name</MudText>
-                            }
-                            else
-                            {
-                                <MudText>No file selected</MudText>
-                            }
-                        </SelectedTemplate>
                     </MudFileUpload>
+                    
+                    @if (_species.FullImageLocation is not null)
+                    {
+                        <MudImage
+                            Src="@_species.FullImageLocation"
+                            Alt="Species Image"
+                            Class="mt-3 rounded-lg"
+                            Style="width:100%"
+                            Elevation="25"/>
+                    }
                 </MudItem>
             </MudGrid>
         </DialogContent>
@@ -163,7 +163,7 @@
         _species = response;
     }
 
-    private async Task UploadFiles(IBrowserFile file)
+    private async Task UploadImage(IBrowserFile file)
     {
         // Validate file type
         if (!file.ContentType.StartsWith("image/"))
@@ -180,8 +180,18 @@
             return;
         }
 
+        _isLoading = true;
         var result = await TempImageService.UploadTempImageAsync(file);
-        Console.Write(result);
+        _isLoading = false;
+    
+        if (result == null)
+        {
+            Snackbar.Add("Failed to upload image", Severity.Error);
+            return;
+        }
+        
+        _species.FullImageLocation = result.FullImageURL;
+        _species.ThumbnailImageLocation = result.ThumbnailImageURL;
     }
 
     private void Cancel()

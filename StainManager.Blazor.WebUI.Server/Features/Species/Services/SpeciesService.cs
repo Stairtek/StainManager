@@ -78,7 +78,7 @@ public class SpeciesService(
 
     public async Task<HttpResponseMessage> UpdateSpecies(SpeciesModel species)
     {
-        return await http.PutAsJsonAsync($"{_baseUrl}", species);
+        return await http.PutAsJsonAsync($"{_baseUrl}/{species.Id}", species);
     }
 
     public async Task<HttpResponseMessage> DeleteSpecies(int id)

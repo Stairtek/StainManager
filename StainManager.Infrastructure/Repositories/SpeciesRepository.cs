@@ -65,6 +65,21 @@ public class SpeciesRepository(
 
         return species;
     }
+    
+    public async Task<bool> UpdateSpeciesImageLocationsAsync(
+        int id,
+        string? fullImageLocation,
+        string? thumbnailImageLocation)
+    {
+        var speciesToUpdate = await GetSpeciesByIdAsync(id);
+
+        Guard.Against.NotFound(id, speciesToUpdate);
+
+        speciesToUpdate.FullImageLocation = fullImageLocation;
+        speciesToUpdate.ThumbnailImageLocation = thumbnailImageLocation;
+
+        return await context.SaveChangesAsync() > 0;
+    }
 
     public async Task<Species> UpdateSpeciesAsync(Species species)
     {

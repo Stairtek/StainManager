@@ -1,19 +1,17 @@
 using Amazon.S3.Model;
+using StainManager.Domain.Common;
 
 namespace StainManager.Application.Services;
 
 public interface IImageService
 {
-    Task<PutObjectResponse> UploadImageAsync(
+    Task<Result<ImageUploadResult>> UploadImageAsync(
         string directory,
         Guid id,
         string imageContent);
 
-    Task<GetObjectResponse> GetImageAsync(
-        string directory,
-        Guid id);
-
-    Task<DeleteObjectResponse> DeleteImageAsync(
+    Task<Result<string>> MoveTempImageAsync(
+        string tempImageFileKey,
         string directory,
         int id);
 }

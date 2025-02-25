@@ -20,6 +20,11 @@ public interface ISpeciesRepository
         bool includeInactive = false);
 
     Task<Species> CreateSpeciesAsync(Species species);
+    
+    Task<bool> UpdateSpeciesImageLocationsAsync(
+        int id,
+        string? imageLocation,
+        string? thumbnailLocation);
 
     Task<Species> UpdateSpeciesAsync(Species species);
 

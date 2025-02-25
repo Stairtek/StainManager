@@ -1,6 +1,11 @@
+using Amazon;
 using Amazon.S3;
 using Amazon.S3.Model;
+
+using StainManager.Application.Common.Models;
 using StainManager.Application.Services;
+using StainManager.Domain.Common;
+using StainManager.Infrastructure.Helpers;
 
 namespace StainManager.Infrastructure.Services.S3;
 
@@ -8,55 +13,93 @@ public class ImageService(
     IAmazonS3 s3Client)
     : IImageService
 {
+    private static readonly RegionEndpoint BucketRegion = RegionEndpoint.USEast2;
     private const string BucketName = "mcampbell-aws";
+    private const string MainDirectory = "stain-manager";
 
-    public async Task<PutObjectResponse> UploadImageAsync(
+    private static string FileKeyPrefixURL
+        => $"https://{BucketName}.s3.{BucketRegion.SystemName}.{BucketRegion.PartitionDnsSuffix}/";
+
+    public async Task<Result<ImageUploadResult>> UploadImageAsync(
         string directory,
         Guid id,
         string imageContent)
     {
         var imageBytes = Convert.FromBase64String(imageContent);
-        using var memoryStream = new MemoryStream(imageBytes);
+        var fileKey = $"{MainDirectory}/{directory}/{id}.jpg";
+        
+        var uploadResult = await UploadToS3Async(fileKey, imageBytes, "image/jpeg");
+        if (!uploadResult.Success)
+            return Result.Fail<ImageUploadResult>("Failed to upload image");
 
+        var thumbnailKey = $"{MainDirectory}/{directory}/{id}_thumbnail.jpg";
+        var thumbnail = await ImageHelper.CreateThumbnail(imageBytes);
+        
+        var thumbnailUploadResult = await UploadToS3Async(
+            thumbnailKey, 
+            thumbnail.ToArray(), 
+            "image/jpeg");
+        
+        if (!thumbnailUploadResult.Success)
+            return Result.Fail<ImageUploadResult>("Failed to upload thumbnail image");
+
+        var result = new ImageUploadResult
+        {
+            FullImageURL = $"{FileKeyPrefixURL}{fileKey}",
+            ThumbnailImageURL = $"{FileKeyPrefixURL}{thumbnailKey}"
+        };
+
+        return Result.Ok(result);
+    }
+    
+    private async Task<Result> UploadToS3Async(string fileKey, byte[] fileBytes, string contentType)
+    {
+        using var memoryStream = new MemoryStream(fileBytes);
         var putObjectRequest = new PutObjectRequest
         {
             BucketName = BucketName,
-            Key = $"stain-manager/{directory}/{id}.jpg",
-            ContentType = "image/jpeg",
-            InputStream = memoryStream,
-            Metadata =
-            {
-                ["x-amz-meta-originalname"] = "image.jpg",
-                ["x-amz-meta-extension"] = ".jpg"
-            }
+            Key = fileKey,
+            ContentType = contentType,
+            InputStream = memoryStream
         };
 
-        return await s3Client.PutObjectAsync(putObjectRequest);
+        var response = await s3Client.PutObjectAsync(putObjectRequest);
+        return response.HttpStatusCode == System.Net.HttpStatusCode.OK
+            ? Result.Ok()
+            : Result.Fail("Failed to upload to S3");
     }
 
-    public Task<GetObjectResponse> GetImageAsync(
-        string directory,
-        Guid id)
-    {
-        var getObjectRequest = new GetObjectRequest
-        {
-            BucketName = BucketName,
-            Key = $"stain-manager/{directory}/{id}"
-        };
-
-        return s3Client.GetObjectAsync(getObjectRequest);
-    }
-
-    public Task<DeleteObjectResponse> DeleteImageAsync(
+    public async Task<Result<string>> MoveTempImageAsync(
+        string tempImageURL,
         string directory,
         int id)
     {
-        var deleteObjectRequest = new DeleteObjectRequest
+        var tempImageFileKey = tempImageURL.Replace(FileKeyPrefixURL, string.Empty);
+        var newFileKey = $"{MainDirectory}/{directory}/{id}.jpg";
+        var copyRequest = new CopyObjectRequest
+        {
+            SourceBucket = BucketName,
+            SourceKey = tempImageFileKey,
+            DestinationBucket = BucketName,
+            DestinationKey = newFileKey
+        };
+        
+        var copyResponse = await s3Client.CopyObjectAsync(copyRequest);
+        
+        if (copyResponse.HttpStatusCode != System.Net.HttpStatusCode.OK)
+            return Result.Fail<string>("Failed to copy image to new location");
+        
+        var deleteRequest = new DeleteObjectRequest
         {
             BucketName = BucketName,
-            Key = $"stain-manager/{directory}/{id}"
+            Key = tempImageFileKey
         };
-
-        return s3Client.DeleteObjectAsync(deleteObjectRequest);
+        
+        var deleteResponse = await s3Client.DeleteObjectAsync(deleteRequest);
+        
+        if (deleteResponse.HttpStatusCode != System.Net.HttpStatusCode.NoContent)
+            return Result.Fail<string>("Failed to delete temporary image");
+        
+        return Result.Ok(newFileKey);
     }
 }

@@ -1,9 +1,10 @@
 using StainManager.Application.Services;
+using StainManager.Domain.Common;
 
 namespace StainManager.Application.TempImage.Commands;
 
 public class UploadTempImageCommand
-    : ICommand<string>
+    : ICommand<ImageUploadResult>
 {
     public Guid Id { get; init; } = Guid.NewGuid();
 
@@ -12,17 +13,17 @@ public class UploadTempImageCommand
 
 public class UploadSpeciesImageCommandHandler(
     IImageService imageService)
-    : ICommandHandler<UploadTempImageCommand, string>
+    : ICommandHandler<UploadTempImageCommand, ImageUploadResult>
 {
-    public async Task<Result<string>> Handle(
+    public async Task<Result<ImageUploadResult>> Handle(
         UploadTempImageCommand request,
         CancellationToken cancellationToken)
     {
-        var imageUploadResponse = await imageService.UploadImageAsync(
+        var imageURL = await imageService.UploadImageAsync(
             "temp",
             request.Id,
             request.ImageContent);
 
-        return imageUploadResponse.ETag;
+        return imageURL;
     }
 }

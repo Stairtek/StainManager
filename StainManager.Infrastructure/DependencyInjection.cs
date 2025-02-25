@@ -1,3 +1,5 @@
+using Amazon.Runtime;
+using Amazon.Runtime.CredentialManagement;
 using Amazon.S3;
 using StainManager.Application.Services;
 using StainManager.Domain.Species;
@@ -19,7 +21,21 @@ public static class DependencyInjection
 
         services.AddScoped<ISpeciesRepository, SpeciesRepository>();
 
-        services.AddSingleton<IAmazonS3, AmazonS3Client>();
+        var awsOptions = configuration.GetAWSOptions("AWS");
+        var sharedCredentialsFile = new SharedCredentialsFile(awsOptions.ProfilesLocation);
+        
+        if (!sharedCredentialsFile.TryGetProfile(awsOptions.Profile, out var profile))
+            throw new InvalidOperationException($"AWS profile '{awsOptions.Profile}' not found.");
+        
+        if (!AWSCredentialsFactory.TryGetAWSCredentials(profile, sharedCredentialsFile, out var awsCredentials))
+            throw new InvalidOperationException($"AWS credentials for profile '{awsOptions.Profile}' not found.");
+
+        var amazonS3Config = new AmazonS3Config
+        {
+            RegionEndpoint = awsOptions.Region
+        };
+
+        services.AddSingleton<IAmazonS3>(sp => new AmazonS3Client(awsCredentials, amazonS3Config));
         services.AddScoped<IImageService, ImageService>();
 
         return services;
