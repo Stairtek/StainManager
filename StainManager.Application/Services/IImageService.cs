@@ -7,7 +7,9 @@ public interface IImageService
     Task<Result<ImageUploadResult>> UploadImageAsync(
         string directory,
         Guid id,
-        string imageContent);
+        string imageContent,
+        string fileName = "",
+        string mediaType = "image/jpg");
 
     Task<Result<ImageMoveResult>> MoveImagesAsync(
         string? fullImageLocation,

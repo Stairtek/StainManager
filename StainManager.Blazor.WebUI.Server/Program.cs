@@ -1,3 +1,4 @@
+using Cropper.Blazor.Extensions;
 using MudBlazor.Services;
 using StainManager.Blazor.WebUI.Server;
 using StainManager.Blazor.WebUI.Server.Features.Shared.Services;
@@ -9,8 +10,22 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+builder.Services.AddCropper();
 builder.Services.AddMudServices();
-builder.Services.AddLogging();
+
+builder.Services.AddLogging(logging =>
+{
+    logging.ClearProviders();
+    logging.AddConsole();
+    logging.AddDebug();
+    // logging.AddFilter("Microsoft.AspNetCore.SignalR", LogLevel.Debug);
+    // logging.AddFilter("Microsoft.AspNetCore.Http.Connections", LogLevel.Debug);
+});
+
+builder.Services.AddSignalR(options =>
+{
+    options.MaximumReceiveMessageSize = 10 * 1024 * 1024; // Set the maximum message size to 10MB
+});
 
 builder.Services.AddScoped(sp => new HttpClient
 {
@@ -33,8 +48,6 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
-app.UseAntiforgery();
 
 app.UseAntiforgery();
 

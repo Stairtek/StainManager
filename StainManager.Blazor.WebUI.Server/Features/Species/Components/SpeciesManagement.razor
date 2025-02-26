@@ -3,8 +3,6 @@
 @using StainManager.Blazor.WebUI.Server.Features.Species.Services
 
 @inject ISpeciesService SpeciesService
-@inject IDialogService DialogService
-@inject ISnackbar Snackbar
 
 <MudDataGrid
     @ref="_dataGrid"
@@ -31,7 +29,6 @@
                         T="string"
                         Value="@_searchQuery"
                         ValueChanged="OnSearch"
-                        ValueExpression="@(() => _searchQuery)"
                         Immediate="true"
                         Placeholder="Search"
                         Adornment="Adornment.Start"

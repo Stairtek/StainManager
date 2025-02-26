@@ -9,6 +9,10 @@ public class UploadTempImageCommand
     public Guid Id { get; init; } = Guid.NewGuid();
 
     public required string ImageContent { get; set; }
+    
+    public string? FileName { get; set; }
+    
+    public string? MediaType { get; set; }
 }
 
 public class UploadSpeciesImageCommandHandler(
@@ -22,7 +26,9 @@ public class UploadSpeciesImageCommandHandler(
         var imageURL = await imageService.UploadImageAsync(
             "temp",
             request.Id,
-            request.ImageContent);
+            request.ImageContent,
+            request.FileName,
+            request.MediaType);
 
         return imageURL;
     }

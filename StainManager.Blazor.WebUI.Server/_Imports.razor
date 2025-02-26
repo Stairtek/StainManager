@@ -1,10 +1,16 @@
 ﻿@using System.Net.Http
 @using System.Net.Http.Json
+@using Cropper.Blazor.Components
 @using Microsoft.AspNetCore.Components.Forms
 @using Microsoft.AspNetCore.Components.Routing
 @using Microsoft.AspNetCore.Components.Web
 @using Microsoft.AspNetCore.Components.Web.Virtualization
 @using Microsoft.JSInterop
 @using MudBlazor
-@using StainManager.Blazor.WebUI.Server
-@using static Microsoft.AspNetCore.Components.Web.RenderMode;
+@using StainManager.Blazor.WebUI.Server;
+@using StainManager.Blazor.WebUI.Server.Features.Shared.Components
+@using StainManager.Blazor.WebUI.Server.Features.Shared.Services
+@using static Microsoft.AspNetCore.Components.Web.RenderMode
+
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar

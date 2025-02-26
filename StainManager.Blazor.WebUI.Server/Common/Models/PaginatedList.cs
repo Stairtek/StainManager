@@ -2,7 +2,7 @@ namespace StainManager.Blazor.WebUI.Server.Common.Models;
 
 public class PaginatedList<T>
 {
-    public List<T> Items { get; init; }
+    public List<T> Items { get; init; } = [];
 
     public int PageNumber { get; init; }
 

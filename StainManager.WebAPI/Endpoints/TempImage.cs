@@ -23,7 +23,7 @@ public class TempImage : EndpointGroupBase
         var result = await sender.Send(command);
 
         return result.Failure
-            ? Results.BadRequest(result.Error)
-            : Results.Ok(result.Value);
+            ? Results.BadRequest(result)
+            : Results.Ok(result);
     }
 }

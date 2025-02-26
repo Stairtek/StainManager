@@ -1,9 +1,9 @@
-@using StainManager.Blazor.WebUI.Server.Features.Shared.Services
+@using StainManager.Blazor.WebUI.Server.Common.Models
 @using StainManager.Blazor.WebUI.Server.Features.Species.Models
 @using StainManager.Blazor.WebUI.Server.Features.Species.Services
+
 @inject ISpeciesService SpeciesService
 @inject ITempImageService TempImageService
-@inject ISnackbar Snackbar
 
 <MudForm
     Model="@_species"
@@ -76,19 +76,35 @@
                 </MudItem>
 
                 <MudItem xs="6">
-                    <MudFileUpload
-                        T="IBrowserFile"
-                        FilesChanged="UploadImage"
-                        AcceptedFileTypes="image/*">
-                        <ActivatorContent>
-                            <MudButton
-                                Variant="Variant.Filled"
-                                Color="Color.Primary"
-                                StartIcon="@Icons.Material.Filled.CloudUpload">
-                                Upload Image
-                            </MudButton>
-                        </ActivatorContent>
-                    </MudFileUpload>
+                    <MudGrid>
+                        <MudItem xs="6">
+                            <MudFileUpload
+                                T="IBrowserFile"
+                                FilesChanged="UploadImage"
+                                Accept=".png, .jpg, .jpeg">
+                                <ActivatorContent>
+                                    <MudButton
+                                        Variant="Variant.Filled"
+                                        Color="Color.Primary"
+                                        StartIcon="@Icons.Material.Filled.CloudUpload">
+                                        Upload Image
+                                    </MudButton>
+                                </ActivatorContent>
+                            </MudFileUpload>
+                        </MudItem>
+                        
+                        <MudItem 
+                            xs="6"
+                            Class="d-flex align-center justify-end">
+                            <MudPaper
+                                Elevation="0">
+                                <MudLink
+                                    OnClick="ConfigureImage">
+                                    Configure Image
+                                </MudLink>
+                            </MudPaper>
+                        </MudItem>
+                    </MudGrid>
                     
                     @if (_species.FullImageLocation is not null)
                     {
@@ -163,36 +179,82 @@
         _species = response;
     }
 
-    private async Task UploadImage(IBrowserFile file)
+    private async Task UploadImage(IBrowserFile? file)
     {
-        // Validate file type
-        if (!file.ContentType.StartsWith("image/"))
+        var imageValidationResult = TempImageService.ValidateImage(file);
+        
+        if (!imageValidationResult.IsValid)
         {
-            Snackbar.Add("Only image files are allowed.", Severity.Error);
-            return;
-        }
-
-        // Validate file size (e.g., max 10 MB)
-        const long maxFileSize = 10 * 1024 * 1024;
-        if (file.Size > maxFileSize)
-        {
-            Snackbar.Add("File size exceeds the 10 MB limit.", Severity.Error);
+            Snackbar.Add(imageValidationResult.ErrorMessage, Severity.Error);
             return;
         }
 
         _isLoading = true;
-        var result = await TempImageService.UploadTempImageAsync(file);
+        var image = await TempImageService.GetImageFromBrowserFileAsync(file!);
+        var result = await TempImageService.UploadTempImageAsync(image!);
         _isLoading = false;
     
-        if (result == null)
+        if (result.Value is null || result.Failure)
         {
             Snackbar.Add("Failed to upload image", Severity.Error);
             return;
         }
         
-        _species.FullImageLocation = result.FullImageURL;
-        _species.ThumbnailImageLocation = result.ThumbnailImageURL;
+        _species.FullImageLocation = result.Value.FullImageURL;
+        _species.ThumbnailImageLocation = result.Value.ThumbnailImageURL;
     }
+
+    private async Task ConfigureImage()
+    {
+        if (_species.FullImageLocation is null)
+        {
+            Snackbar.Add("No image to edit", Severity.Error);
+            return;
+        }
+        
+        var parameters = new DialogParameters<ImageEditorDialog>
+        {
+            { c => c.FullImageLocation, _species.FullImageLocation },
+            { c => c.OnImageConfiguredAsync, OnImageConfiguredAsync }
+        };
+        var options = new DialogOptions
+        {
+            Position = DialogPosition.TopCenter,
+            MaxWidth = MaxWidth.Medium,
+            FullWidth = true,
+            CloseButton = true
+        };
+        
+        var dialog = await DialogService.ShowAsync<ImageEditorDialog>(
+            "Configure Image", 
+            parameters,
+            options);
+        var dialogResult = await dialog.Result;
+    }
+
+    private async Task<bool> OnImageConfiguredAsync(ImageConfigurationModel imageConfigurationModel)
+    {
+        _isLoading = true;
+        var uploadResult = await TempImageService.UploadTempImageAsync(imageConfigurationModel);
+        _isLoading = false;
+        
+        if (uploadResult.Failure || uploadResult.Value == null)
+        {
+            var errorMessage = "Failed to upload image";
+            
+            if (!string.IsNullOrEmpty(uploadResult.Error))
+                errorMessage += $":<br/>{uploadResult.Error}";
+            
+            Snackbar.Add(new MarkupString(errorMessage), Severity.Error);
+            return false;
+        }
+        
+        _species.FullImageLocation = uploadResult.Value.FullImageURL;
+        _species.ThumbnailImageLocation = uploadResult.Value.ThumbnailImageURL;
+
+        return true;
+    }
+    
 
     private void Cancel()
     {
@@ -208,11 +270,15 @@
 
         HttpResponseMessage result;
 
+        _isLoading = true;
+        
         if (Id is null or 0)
             result = await SpeciesService.CreateSpecies(_species);
         else
             result = await SpeciesService.UpdateSpecies(_species);
 
+        _isLoading = false;
+        
         if (!result.IsSuccessStatusCode)
         {
             var failedMessage = $"Failed to {(Id is null or 0 ? "add" : "update")} species";

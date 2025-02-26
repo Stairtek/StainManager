@@ -1,0 +1,180 @@
+@using Cropper.Blazor.Extensions
+@using Cropper.Blazor.Models
+@using StainManager.Blazor.WebUI.Server.Common.Models
+
+@inject ISnackbar Snackbar
+
+<style>
+    .cropper-container {
+        height: 650px;
+        width: 650px;
+        padding: 0;
+    }
+    
+    .cropper {
+        max-height: 500px;
+        max-width: 100%;
+    }
+</style>
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon
+                Icon="@Icons.Material.Filled.Edit"
+                Class="mr-3 mb-n1"/>
+            Edit Image
+        </MudText>
+    </TitleContent>
+    
+    <DialogContent>
+        <MudContainer
+            Class="cropper-container">
+            <MudPaper
+                Elevation="3">
+                <CropperComponent
+                    Class="cropper"
+                    Src="@FullImageLocation"
+                    @ref="_cropper"
+                    Options="_options" />
+            </MudPaper>
+        </MudContainer>
+
+        <MudContainer
+            Class="my-4 px-0"
+            Style="max-width: 650px;">
+            <MudButtonGroup
+                Color="Color.Primary"
+                Variant="Variant.Filled"
+                FullWidth="true">
+                <MudButton 
+                    StartIcon="@Icons.Material.Filled.ZoomIn" 
+                    FullWidth="true"
+                    OnClick="() => Zoom((decimal).1)"/>
+                
+                <MudButton 
+                    StartIcon="@Icons.Material.Filled.ZoomOut" 
+                    FullWidth="true"
+                    OnClick="() => Zoom((decimal)-.1)"/>
+                
+                <MudButton 
+                    StartIcon="@Icons.Material.Filled.RotateLeft" 
+                    FullWidth="true" 
+                    OnClick="() => _cropper.Rotate(-90)"/>
+                
+                <MudButton 
+                    StartIcon="@Icons.Material.Filled.RotateRight" 
+                    FullWidth="true"
+                    OnClick="() => _cropper.Rotate(90)"/>
+            </MudButtonGroup>
+
+        </MudContainer>
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton
+            Variant="Variant.Filled"
+            Color="Color.Primary"
+            OnClick="async () => await Submit()">
+            Submit
+        </MudButton>
+    </DialogActions>
+
+</MudDialog>
+
+<MudOverlay Visible="_isLoading" DarkBackground="true" Absolute="true">
+    <MudProgressCircular Color="Color.Secondary" Indeterminate="true"/>
+</MudOverlay>
+
+@code {
+    
+    [CascadingParameter]
+    public required IMudDialogInstance MudDialog { get; set; }
+    
+    [Parameter]
+    public string FullImageLocation { get; set; } = string.Empty;
+    
+    [Parameter]
+    public required Func<ImageConfigurationModel, Task<bool>> OnImageConfiguredAsync { get; set; }
+    
+    [Parameter]
+    public int Width { get; set; } = 650;
+    
+    [Parameter]
+    public int Height { get; set; } = 650;
+    
+    
+    private CropperComponent _cropper = null!;
+    private Options _options = null!;
+    private bool _isLoading;
+
+    protected override void OnInitialized()
+    {
+        _options = new Options()
+        {
+            AspectRatio = 1,
+            CropBoxResizable = false,
+            MinCropBoxWidth = 500,
+            MinCropBoxHeight = 500,
+            ViewMode = ViewMode.Vm3,
+            Guides = false,
+            Modal = false,
+            ZoomOnTouch = false,
+            ZoomOnWheel = false,
+            SetDataOptions = new SetDataOptions()
+            {
+                Width = Width,
+                Height = Height
+            }
+        };
+    }
+    
+    private async Task Zoom(decimal ratio)
+    {
+        var cropperData = await _cropper.GetDataAsync(true);
+
+        if ((ratio > 0 && cropperData.Width > 500) || ratio < 0)
+            _cropper.Zoom(ratio);
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+
+    private async Task Submit()
+    {
+        _isLoading = true;
+        
+        var croppedCanvasOptions = new GetCroppedCanvasOptions()
+        {
+            MaxHeight = 4096,
+            MaxWidth = 4096,
+            ImageSmoothingQuality = ImageSmoothingQuality.High.ToEnumString()
+        };
+
+        var croppedCanvasDataURL = await _cropper.GetCroppedCanvasDataURLAsync(croppedCanvasOptions);
+        
+        if (string.IsNullOrEmpty(croppedCanvasDataURL))
+        {
+            Snackbar.Add("Failed to get cropped canvas data URL", Severity.Error);
+            _isLoading = false;
+            return;
+        }
+        
+        var decodedImage = croppedCanvasDataURL.Decode();
+        var imageConfigurationModel = new ImageConfigurationModel(
+            decodedImage.base64ImageData,
+            string.Empty,
+            decodedImage.mediaType);
+        
+        var result = await OnImageConfiguredAsync.Invoke(imageConfigurationModel);
+        
+        _isLoading = false;
+        
+        if (result)
+            MudDialog.Close();
+    }
+
+}
