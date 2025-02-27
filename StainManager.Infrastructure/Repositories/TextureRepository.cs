@@ -110,7 +110,7 @@ public class TextureRepository(
 
     public async Task<bool> RestoreTextureAsync(int id)
     {
-        var textureToDelete = await GetTextureByIdAsync(id);
+        var textureToDelete = await GetTextureByIdAsync(id, true);
 
         Guard.Against.NotFound(id, textureToDelete);
 

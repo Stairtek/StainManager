@@ -1,81 +1,37 @@
 @using StainManager.Blazor.WebUI.Server.Common.Models
-@using StainManager.Blazor.WebUI.Server.Features.Species.Models
-@using StainManager.Blazor.WebUI.Server.Features.Species.Services
+@using StainManager.Blazor.WebUI.Server.Features.Textures.Models
+@using StainManager.Blazor.WebUI.Server.Features.Textures.Services
 
-@inject ISpeciesService SpeciesService
+@inject ITexturesService TexturesService
 @inject ITempImageService TempImageService
 
 <MudForm
-    Model="@_species"
+    Model="@_texture"
     @ref="_form"
     Validation="@(_validator.ValidateValue)"
     ValidationDelay="0">
-
+    
     <MudDialog>
         <TitleContent>
             <MudText Typo="Typo.h6">
                 <MudIcon
                     Icon="@(IsNew ? Icons.Material.Filled.AddCircle : Icons.Material.Filled.Edit)"
                     Class="mr-3 mb-n1"/>
-                @(IsNew ? "Add" : "Edit") Species
+                @(IsNew ? "Add" : "Edit") Texture
             </MudText>
         </TitleContent>
-
+        
         <DialogContent>
             <MudGrid>
-                <MudItem xs="6" Style="padding-top: 12px;">
+                <MudItem xs="12" Style="padding-top: 12px;">
                     <MudTextField
                         Label="Name"
-                        @bind-Value="_species.Name"
-                        For="@(() => _species.Name)"
-                        Immediate="true"/>
-
-                    <MudGrid>
-                        <MudItem xs="6">
-                            <MudTextField
-                                Label="Abbreviation"
-                                @bind-Value="_species.Abbreviation"
-                                For="@(() => _species.Abbreviation)"
-                                Class="mt-3"
-                                Immediate="true"/>
-                        </MudItem>
-
-                        <MudItem xs="6">
-                            <MudSwitch
-                                Label="Is Production Species"
-                                @bind-Value="_species.IsProduction"
-                                For="@(() => _species.IsProduction)"
-                                LabelPlacement="Placement.Start"
-                                Color="Color.Success"
-                                UncheckedColor="Color.Warning"
-                                Class="justify-end"
-                                Style="height: 100%"/>
-                        </MudItem>
-                    </MudGrid>
-
-                    <MudTextField
-                        Label="Scientific Name"
-                        @bind-Value="_species.ScientificName"
-                        For="@(() => _species.ScientificName)"
-                        Class="mt-3"
-                        Immediate="true"/>
-
-                    <MudTextField
-                        Label="Country of Origin"
-                        @bind-Value="_species.CountryOfOrigin"
-                        For="@(() => _species.CountryOfOrigin)"
-                        Class="mt-3"
-                        Immediate="true"/>
-
-                    <MudTextField
-                        Label="Janka Hardness"
-                        @bind-Value="_species.JankaHardness"
-                        For="@(() => _species.JankaHardness)"
-                        Class="mt-3"
+                        @bind-Value="_texture.Name"
+                        For="@(() => _texture.Name)"
                         Immediate="true"/>
                 </MudItem>
-
-                <MudItem xs="6">
+                
+                <MudItem xs="12">
                     <MudGrid>
                         <MudItem xs="6">
                             <MudFileUpload
@@ -92,8 +48,8 @@
                                 </ActivatorContent>
                             </MudFileUpload>
                         </MudItem>
-                        
-                        <MudItem 
+
+                        <MudItem
                             xs="6"
                             Class="d-flex align-center justify-end">
                             <MudPaper
@@ -105,11 +61,11 @@
                             </MudPaper>
                         </MudItem>
                     </MudGrid>
-                    
-                    @if (_species.FullImageLocation is not null)
+
+                    @if (_texture.FullImageLocation is not null)
                     {
                         <MudImage
-                            Src="@_species.FullImageLocation"
+                            Src="@_texture.FullImageLocation"
                             Alt="Species Image"
                             Class="mt-3 rounded-lg"
                             Style="width:100%"
@@ -118,18 +74,17 @@
                 </MudItem>
             </MudGrid>
         </DialogContent>
-
+        
         <DialogActions>
             <MudButton OnClick="Cancel">Cancel</MudButton>
             <MudButton
-                Variant="Variant.Filled"
                 Color="Color.Primary"
-                Disabled="!_speciesLoaded"
+                Variant="Variant.Filled"
+                Disabled="!_textureLoaded"
                 OnClick="@(async () => await Submit())">
                 Save
             </MudButton>
         </DialogActions>
-
     </MudDialog>
 
     <MudOverlay Visible="_isLoading" DarkBackground="true" Absolute="true">
@@ -138,87 +93,90 @@
 </MudForm>
 
 @code {
-
     [CascadingParameter]
     public required IMudDialogInstance MudDialog { get; set; }
-
+    
     [Parameter]
     public int? Id { get; set; }
-
+    
     private bool IsNew => Id is null or 0;
-
-
-    private SpeciesModel _species = new();
+    
+    
+    private TextureModel _texture = new();
     private MudForm _form = null!;
-    private readonly SpeciesFluentValidator _validator = new();
+    private readonly TextureFluentValidator _validator = new();
     private bool _isLoading;
-    private bool _speciesLoaded;
-
-
+    private bool _textureLoaded;
+    
+    
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            await LoadSpecies();
+            await LoadTexture();
             StateHasChanged();
         }
     }
-
-    private async Task LoadSpecies()
+    
+    private async Task LoadTexture()
     {
-        if (Id is null or 0) return;
-
-        _isLoading = true;
-        var result = await SpeciesService.GetSpeciesByIdAsync(Id.Value);
-        _isLoading = false;
-
-        if (result is { Failure: true } || result.Value is null)
+        if (Id is null or 0)
         {
-            Snackbar.Add(result.GetErrorMessage("Failed to load species"), Severity.Error);
+            _textureLoaded = true;
             return;
         }
-
-        _species = result.Value;
-        _speciesLoaded = true;
+        
+        _isLoading = true;
+        var result = await TexturesService.GetTextureByIdAsync(Id.Value);
+        _isLoading = false;
+        
+        if (result is { Failure: true } || result.Value is null)
+        {
+            Snackbar.Add(result.GetErrorMessage("Failed to load texture"), Severity.Error);
+            return;
+        }
+        
+        _texture = result.Value;
+        _textureLoaded = true;
     }
-
+    
     <!--#region Image-->
     private async Task UploadImage(IBrowserFile? file)
     {
         var imageValidationResult = TempImageService.ValidateImage(file);
-        
+
         if (!imageValidationResult.IsValid)
         {
             Snackbar.Add(imageValidationResult.ErrorMessage, Severity.Error);
             return;
         }
-
+        
         _isLoading = true;
         var image = await TempImageService.GetImageFromBrowserFileAsync(file!);
         var result = await TempImageService.UploadTempImageAsync(image!);
         _isLoading = false;
-    
-        if (result.Value is null || result.Failure)
+        
+        if (result is { Failure: true } || result.Value is null)
         {
             Snackbar.Add(result.GetErrorMessage("Failed to upload image"), Severity.Error);
             return;
         }
         
-        _species.FullImageLocation = result.Value.FullImageURL;
-        _species.ThumbnailImageLocation = result.Value.ThumbnailImageURL;
+        _texture.FullImageLocation = result.Value.FullImageURL;
+        _texture.ThumbnailImageLocation = result.Value.ThumbnailImageURL;
     }
 
     private async Task ConfigureImage()
     {
-        if (_species.FullImageLocation is null)
+        if (_texture.FullImageLocation is null)
         {
-            Snackbar.Add("No image to edit", Severity.Error);
+            Snackbar.Add("Please upload an image first.", Severity.Warning);
             return;
         }
-        
+
         var parameters = new DialogParameters<ImageEditorDialog>
         {
-            { c => c.FullImageLocation, _species.FullImageLocation },
+            { c => c.FullImageLocation, _texture.FullImageLocation },
             { c => c.OnImageConfiguredAsync, OnImageConfiguredAsync }
         };
         var options = new DialogOptions
@@ -231,61 +189,61 @@
         
         await DialogService.ShowAsync<ImageEditorDialog>(
             "Configure Image", 
-            parameters,
+            parameters, 
             options);
     }
 
-    private async Task<bool> OnImageConfiguredAsync(ImageConfigurationModel imageConfigurationModel)
+    private async Task<bool> OnImageConfiguredAsync(
+        ImageConfigurationModel imageConfigurationModel)
     {
         _isLoading = true;
-        var uploadResult = await TempImageService.UploadTempImageAsync(imageConfigurationModel);
+        var result = await TempImageService.UploadTempImageAsync(imageConfigurationModel);
         _isLoading = false;
         
-        if (uploadResult.Failure || uploadResult.Value == null)
+        if (result is { Failure: true } || result.Value is null)
         {
-            Snackbar.Add(uploadResult.GetErrorMessage("Failed to upload image"), Severity.Error);
+            Snackbar.Add(result.GetErrorMessage("Failed to upload image"), Severity.Error);
             return false;
         }
         
-        _species.FullImageLocation = uploadResult.Value.FullImageURL;
-        _species.ThumbnailImageLocation = uploadResult.Value.ThumbnailImageURL;
-
+        _texture.FullImageLocation = result.Value.FullImageURL;
+        _texture.ThumbnailImageLocation = result.Value.ThumbnailImageURL;
+        
         return true;
     }
     <!--#endregion Image-->
-
+    
     private void Cancel() => MudDialog.Cancel();
 
     private async Task Submit()
     {
         await _form.Validate();
-
+        
         if (!_form.IsValid)
             return;
-
+        
         _isLoading = true;
         
         var result = IsNew
-            ? await SpeciesService.CreateSpeciesAsync(_species)
-            : await SpeciesService.UpdateSpeciesAsync(_species);
-
+            ? await TexturesService.CreateTextureAsync(_texture)
+            : await TexturesService.UpdateTextureAsync(_texture);
+        
         _isLoading = false;
         
         if (result is { Failure: true })
         {
             var failedMessage = IsNew
-                ? "Failed to add species"
-                : "Failed to update species";
+                ? "Failed to add texture"
+                : "Failed to update texture";
             Snackbar.Add(result.GetErrorMessage(failedMessage), Severity.Error);
             return;
         }
-
+        
         var successMessage = IsNew
-            ? $"{_species.Name} added successfully"
-            : $"{_species.Name} updated successfully";
+            ? $"{_texture.Name} added successfully"
+            : $"{_texture.Name} updated successfully";
         Snackbar.Add(successMessage, Severity.Success);
-
+        
         MudDialog.Close(DialogResult.Ok(true));
     }
-
 }

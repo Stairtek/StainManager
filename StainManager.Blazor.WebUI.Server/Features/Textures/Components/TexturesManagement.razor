@@ -1,5 +1,6 @@
 @page "/textures"
 
+@using StainManager.Blazor.WebUI.Server.Features.Species.Components
 @using StainManager.Blazor.WebUI.Server.Features.Textures.Models
 @using StainManager.Blazor.WebUI.Server.Features.Textures.Services
 
@@ -99,6 +100,26 @@
         </TemplateColumn>
         <!--#endregion Edit-->
 
+        <!--#region Thumbnail-->
+        <TemplateColumn
+            Title="Thumbnail"
+            CellStyle="width: 50px"
+            Filterable="false">
+            <CellTemplate>
+                @{
+                    var imageSrc = context.Item.ThumbnailImageLocation ?? "images/Image Coming Soon.jpg";
+
+                    <MudImage
+                        Src="@imageSrc"
+                        Elevation="25"
+                        Class="rounded-lg"
+                        Width="75"
+                        FallbackSrc="images/Image Coming Soon.jpg"/>
+                }
+            </CellTemplate>
+        </TemplateColumn>
+        <!--#endregion Thumbnail-->
+
         <PropertyColumn
             Property="c => c.Name"
             Filterable="true"/>
@@ -196,12 +217,51 @@
     <!--#region Row Actions-->
     private async Task OpenTextureDialog(int? id = null)
     {
+        var parameters = new DialogParameters<SpeciesDialog>
+        {
+            { c => c.Id, id }
+        };
+        var options = new DialogOptions
+        {
+            Position = DialogPosition.TopCenter,
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true,
+            CloseButton = true
+        };
+        var title = id is null
+            ? "Add Texture"
+            : "Edit Texture";
+        var dialog = await DialogService.ShowAsync<TextureDialog>(
+            title,
+            parameters,
+            options);
+        var result = await dialog.Result;
         
+        if (result is { Canceled: false })
+            await _dataGrid.ReloadServerData();
     }
 
     private async Task OpenDeleteTextureDialog(int textureId)
     {
+        var parameters = new DialogParameters<DeleteTextureDialog>
+        {
+            { c => c.Id, textureId }
+        };
+        var options = new DialogOptions
+        {
+            Position = DialogPosition.TopCenter,
+            MaxWidth = MaxWidth.ExtraSmall,
+            FullWidth = true,
+            CloseButton = true
+        };
+        var dialog = await DialogService.ShowAsync<DeleteTextureDialog>(
+            "Delete Texture",
+            parameters,
+            options);
+        var result = await dialog.Result;
         
+        if (result is { Canceled: false })
+            await _dataGrid.ReloadServerData();
     }
 
     private async Task RestoreTexture(int textureId)

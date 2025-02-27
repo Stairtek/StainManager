@@ -84,6 +84,6 @@ public class TexturesService(
 
     public async Task<Result<bool>?> RestoreTextureAsync(int id)
     {
-        return await _http.PutAsync($"{_baseUrl}/restore/{id}", false); 
+        return await _http.PutAsync($"{_baseUrl}/{id}/restore", false); 
     }
 }

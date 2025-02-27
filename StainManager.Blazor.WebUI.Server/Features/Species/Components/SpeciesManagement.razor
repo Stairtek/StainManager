@@ -247,8 +247,9 @@
             FullWidth = true,
             CloseButton = true
         };
-        var addOrEditText = id is null ? "Add" : "Edit";
-        var title = $"{addOrEditText} Species";
+        var title = id is null
+            ? "Add Species"
+            : "Edit Species";
         var dialog = await DialogService.ShowAsync<SpeciesDialog>(
             title,
             parameters,
