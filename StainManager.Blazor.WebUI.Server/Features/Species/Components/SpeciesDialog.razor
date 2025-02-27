@@ -124,6 +124,7 @@
             <MudButton
                 Variant="Variant.Filled"
                 Color="Color.Primary"
+                Disabled="!_speciesLoaded"
                 OnClick="@(async () => await Submit())">
                 Save
             </MudButton>
@@ -151,6 +152,7 @@
     private MudForm _form = null!;
     private readonly SpeciesFluentValidator _validator = new();
     private bool _isLoading;
+    private bool _speciesLoaded;
 
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -167,18 +169,20 @@
         if (Id is null or 0) return;
 
         _isLoading = true;
-        var response = await SpeciesService.GetSpeciesByIdAsync(Id.Value);
+        var result = await SpeciesService.GetSpeciesByIdAsync(Id.Value);
         _isLoading = false;
 
-        if (response == null)
+        if (result is { Failure: true } || result.Value is null)
         {
-            Snackbar.Add("Failed to load species", Severity.Error);
+            Snackbar.Add(result.GetErrorMessage("Failed to load species"), Severity.Error);
             return;
         }
 
-        _species = response;
+        _species = result.Value;
+        _speciesLoaded = true;
     }
 
+    <!--#region Image-->
     private async Task UploadImage(IBrowserFile? file)
     {
         var imageValidationResult = TempImageService.ValidateImage(file);
@@ -250,12 +254,9 @@
 
         return true;
     }
-    
+    <!--#endregion Image-->
 
-    private void Cancel()
-    {
-        MudDialog.Cancel();
-    }
+    private void Cancel() => MudDialog.Cancel();
 
     private async Task Submit()
     {

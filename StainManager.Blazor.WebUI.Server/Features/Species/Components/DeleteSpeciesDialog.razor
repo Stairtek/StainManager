@@ -70,9 +70,9 @@
         var result = await SpeciesService.GetSpeciesByIdAsync(Id.Value);
         _isLoading = false;
 
-        if (result.Failure || result.Value is null)
+        if (result is { Failure: true } || result.Value is null)
         {
-            Snackbar.Add(result.Error ?? "Failed to load species", Severity.Error);
+            Snackbar.Add(result.GetErrorMessage("Failed to load species"), Severity.Error);
             return;
         }
         
