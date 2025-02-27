@@ -1,8 +1,9 @@
 using StainManager.Domain.Common;
+using StainManager.Domain.Common.Interfaces;
 
 namespace StainManager.Domain.Species;
 
-public interface ISpeciesRepository
+public interface ISpeciesRepository : IRepository
 {
     Task<List<Species>> GetAllSpeciesAsync(
         bool isActive = true);

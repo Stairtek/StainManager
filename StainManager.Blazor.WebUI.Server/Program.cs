@@ -3,6 +3,7 @@ using MudBlazor.Services;
 using StainManager.Blazor.WebUI.Server;
 using StainManager.Blazor.WebUI.Server.Features.Shared.Services;
 using StainManager.Blazor.WebUI.Server.Features.Species.Services;
+using StainManager.Blazor.WebUI.Server.Features.Textures.Services;
 using StainManager.Blazor.WebUI.Server.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -28,8 +29,7 @@ builder.Services.AddSignalR(options =>
     options.MaximumReceiveMessageSize = 10 * 1024 * 1024; // Set the maximum message size to 10MB
 });
 
-builder.Services.AddScoped<ISpeciesService, SpeciesService>();
-builder.Services.AddScoped<ITempImageService, TempImageService>();
+builder.Services.AddWebAPIServices();
 
 builder.Services.AddHttpContextAccessor();
 

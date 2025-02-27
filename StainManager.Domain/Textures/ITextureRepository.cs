@@ -1,8 +1,9 @@
 using StainManager.Domain.Common;
+using StainManager.Domain.Common.Interfaces;
 
 namespace StainManager.Domain.Textures;
 
-public interface ITextureRepository
+public interface ITextureRepository : IRepository
 {
     Task<List<Texture>> GetAllTexturesAsync(
         bool isActive = true);

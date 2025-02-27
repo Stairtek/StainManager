@@ -1,12 +1,13 @@
 using MudBlazor;
 using StainManager.Blazor.WebUI.Server.Common.Helpers;
+using StainManager.Blazor.WebUI.Server.Common.Interfaces;
 using StainManager.Blazor.WebUI.Server.Common.Models;
 using StainManager.Blazor.WebUI.Server.Extensions;
 using StainManager.Blazor.WebUI.Server.Features.Textures.Models;
 
 namespace StainManager.Blazor.WebUI.Server.Features.Textures.Services;
 
-public interface ITexturesService
+public interface ITexturesService : IWebAPIService
 {
     Task<List<TextureModel>?> GetTexturesAsync(bool showDeleted = false);
     

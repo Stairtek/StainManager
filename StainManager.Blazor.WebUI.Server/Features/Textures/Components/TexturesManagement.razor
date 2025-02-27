@@ -1,14 +1,14 @@
-@page "/species"
+@page "/textures"
 
-@using StainManager.Blazor.WebUI.Server.Features.Species.Models
-@using StainManager.Blazor.WebUI.Server.Features.Species.Services
+@using StainManager.Blazor.WebUI.Server.Features.Textures.Models
+@using StainManager.Blazor.WebUI.Server.Features.Textures.Services
 
-@inject ISpeciesService SpeciesService
+@inject ITexturesService TexturesService
 
 <MudDataGrid
     @ref="_dataGrid"
-    T="SpeciesManagementModel"
-    ServerData="LoadSpecies"
+    T="TextureManagementModel"
+    ServerData="LoadTextures"
     Hover="true"
     Striped="true"
     ColumnResizeMode="ResizeMode.Column"
@@ -24,7 +24,7 @@
                     Style="height: 48px"
                     Elevation="0">
 
-                    <MudText Typo="Typo.h6">Species</MudText>
+                    <MudText Typo="Typo.h6">Textures</MudText>
 
                     <MudTextField
                         T="string"
@@ -36,13 +36,12 @@
                         AdornmentIcon="@Icons.Material.Filled.Search"
                         IconSize="Size.Medium"
                         Class="ml-5"/>
-
                 </MudPaper>
             </MudItem>
             <!--#endregion Header & Search-->
-
+            
             <MudItem xs="6"/>
-
+            
             <!--#region Header Actions-->
             <MudItem xs="2">
                 <MudPaper
@@ -67,7 +66,7 @@
                         <MudIconButton
                             Icon="@Icons.Material.Filled.AddCircle"
                             Color="Color.Default"
-                            OnClick="() => OpenSpeciesDialog()"/>
+                            OnClick="() => OpenTextureDialog()"/>
                     </MudTooltip>
                 </MudPaper>
             </MudItem>
@@ -76,7 +75,7 @@
     </ToolBarContent>
 
     <NoRecordsContent>
-        <MudText Typo="Typo.h6">No Species Found</MudText>
+        <MudText Typo="Typo.h6">No Textures Found</MudText>
     </NoRecordsContent>
 
     <Columns>
@@ -93,55 +92,16 @@
                             Color="Color.Secondary"
                             StartIcon="@Icons.Material.Filled.Edit"
                             Size="Size.Small"
-                            OnClick="() => OpenSpeciesDialog(context.Item.Id)"/>
+                            OnClick="() => OpenTextureDialog(context.Item.Id)"/>
                     </MudTooltip>
                 }
             </CellTemplate>
         </TemplateColumn>
         <!--#endregion Edit-->
 
-        <!--#region Thumbnail-->
-        <TemplateColumn
-            Title="Thumbnail"
-            CellStyle="width: 50px"
-            Filterable="false">
-            <CellTemplate>
-                @{
-                    var imageSrc = context.Item.ThumbnailImageLocation ?? "images/Image Coming Soon.jpg";
-
-                    <MudImage
-                        Src="@imageSrc"
-                        Elevation="25"
-                        Class="rounded-lg"
-                        Width="75"
-                        FallbackSrc="images/Image Coming Soon.jpg"/>
-                }
-            </CellTemplate>
-        </TemplateColumn>
-        <!--#endregion Thumbnail-->
-
         <PropertyColumn
             Property="c => c.Name"
             Filterable="true"/>
-
-        <PropertyColumn
-            Property="c => c.Abbreviation"
-            Filterable="true"/>
-
-        <!--#region Production-->
-        <TemplateColumn
-            Title="Production"
-            Filterable="false">
-            <CellTemplate>
-                <MudChip
-                    T="string"
-                    Icon="@(context.Item.IsProduction ? Icons.Material.Filled.Check : Icons.Material.Filled.Close)"
-                    Color="@(context.Item.IsProduction ? Color.Success : Color.Error)">
-                    @(context.Item.IsProduction ? "Production" : "Unavailable")
-                </MudChip>
-            </CellTemplate>
-        </TemplateColumn>
-        <!--#endregion Production-->
 
         <!--#region Delete/Restore-->
         <TemplateColumn
@@ -157,9 +117,9 @@
                         OnClick="async () =>
                         {
                             if (!_showDeleted)
-                                await OpenDeleteSpeciesDialog(context.Item.Id);
+                                await OpenDeleteTextureDialog(context.Item.Id);
                             else
-                                await RestoreSpecies(context.Item.Id);
+                                await RestoreTexture(context.Item.Id);
                         }"/>
                 </MudTooltip>
             </CellTemplate>
@@ -168,19 +128,19 @@
     </Columns>
 
     <PagerContent>
-        <MudDataGridPager T="SpeciesManagementModel"/>
+        <MudDataGridPager T="TextureManagementModel"/>
     </PagerContent>
 </MudDataGrid>
 
 @code {
-    MudDataGrid<SpeciesManagementModel> _dataGrid = null!;
+    MudDataGrid<TextureManagementModel> _dataGrid = null!;
     private bool _showDeleted;
     private string _searchQuery = string.Empty;
-
-    private async Task<GridData<SpeciesManagementModel>> LoadSpecies(
-        GridState<SpeciesManagementModel> state)
+    
+    private async Task<GridData<TextureManagementModel>> LoadTextures(
+        GridState<TextureManagementModel> state)
     {
-        var speciesManagement = await SpeciesService.GetSpeciesManagementAsync(
+        var texturesManagement = await TexturesService.GetTexturesManagementAsync(
             _searchQuery,
             state.Page + 1, // 0-based index
             state.PageSize,
@@ -188,16 +148,16 @@
             state.SortDefinitions.FirstOrDefault(),
             state.FilterDefinitions);
 
-        if (speciesManagement.Failure)
+        if (texturesManagement.Failure)
         {
-            Snackbar.Add(speciesManagement.GetErrorMessage("Failed to load species"), Severity.Error);
-            return new GridData<SpeciesManagementModel>();
+            Snackbar.Add(texturesManagement.GetErrorMessage("Failed to load textures"), Severity.Error);
+            return new GridData<TextureManagementModel>();
         }
 
-        return new GridData<SpeciesManagementModel>
+        return new GridData<TextureManagementModel>
         {
-            TotalItems = speciesManagement.Value?.TotalCount ?? 0,
-            Items = speciesManagement.Value?.Items ?? []
+            TotalItems = texturesManagement.Value?.TotalCount ?? 0,
+            Items = texturesManagement.Value?.Items ?? []
         };
     }
 
@@ -234,58 +194,23 @@
     <!--#endregion Toolbar Actions-->
 
     <!--#region Row Actions-->
-    private async Task OpenSpeciesDialog(int? id = null)
+    private async Task OpenTextureDialog(int? id = null)
     {
-        var parameters = new DialogParameters<SpeciesDialog>
-        {
-            { c => c.Id, id }
-        };
-        var options = new DialogOptions
-        {
-            Position = DialogPosition.TopCenter,
-            MaxWidth = MaxWidth.Medium,
-            FullWidth = true,
-            CloseButton = true
-        };
-        var addOrEditText = id is null ? "Add" : "Edit";
-        var title = $"{addOrEditText} Species";
-        var dialog = await DialogService.ShowAsync<SpeciesDialog>(
-            title,
-            parameters,
-            options);
-        var result = await dialog.Result;
-
-        if (result is { Canceled: false })
-            await _dataGrid.ReloadServerData();
+        
     }
 
-    private async Task OpenDeleteSpeciesDialog(int speciesId)
+    private async Task OpenDeleteTextureDialog(int textureId)
     {
-        var parameters = new DialogParameters<DeleteSpeciesDialog>
-        {
-            { c => c.Id, speciesId }
-        };
-        var options = new DialogOptions
-        {
-            Position = DialogPosition.TopCenter
-        };
-        var dialog = await DialogService.ShowAsync<DeleteSpeciesDialog>(
-            "Delete Species",
-            parameters,
-            options);
-        var result = await dialog.Result;
-
-        if (result is { Canceled: false })
-            await _dataGrid.ReloadServerData();
+        
     }
 
-    private async Task RestoreSpecies(int speciesId)
+    private async Task RestoreTexture(int textureId)
     {
-        var result = await SpeciesService.RestoreSpeciesAsync(speciesId);
-
+        var result = await TexturesService.RestoreTextureAsync(textureId);
+        
         if (result is { Failure: true })
         {
-            Snackbar.Add(result.GetErrorMessage("Failed to restore species"), Severity.Error);
+            Snackbar.Add(result.GetErrorMessage("Failed to restore texture"), Severity.Error);
             return;
         }
 

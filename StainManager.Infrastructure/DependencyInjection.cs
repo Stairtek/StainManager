@@ -1,8 +1,10 @@
-using Amazon.Runtime;
+using System.Reflection;
 using Amazon.Runtime.CredentialManagement;
 using Amazon.S3;
 using StainManager.Application.Services;
+using StainManager.Domain.Common.Interfaces;
 using StainManager.Domain.Species;
+using StainManager.Domain.Textures;
 using StainManager.Infrastructure.Repositories;
 using StainManager.Infrastructure.Services.S3;
 
@@ -19,8 +21,38 @@ public static class DependencyInjection
             options.UseSqlServer(configuration.GetConnectionString("DefaultConnection"));
         });
 
-        services.AddScoped<ISpeciesRepository, SpeciesRepository>();
+        services.AddRepositories();
+        
+        services.AddAWS(configuration);
+        
+        services.AddScoped<IImageService, ImageService>();
 
+        return services;
+    }
+
+    private static IServiceCollection AddRepositories(
+        this IServiceCollection services)
+    {
+        var repositoryInterfaceType = typeof(IRepository);
+        var repositoryTypes = Assembly.GetExecutingAssembly().GetTypes()
+            .Where(t => t is { IsClass: true, IsAbstract: false })
+            .Where(t => t.GetInterfaces().Contains(repositoryInterfaceType));
+
+        foreach (var repositoryType in repositoryTypes)
+        {
+            var interfaceType = repositoryType.GetInterfaces()
+                .First(i => i != repositoryInterfaceType);
+            
+            services.AddScoped(interfaceType, repositoryType);
+        }
+
+        return services;
+    }
+
+    private static IServiceCollection AddAWS(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
         var awsOptions = configuration.GetAWSOptions("AWS");
         var sharedCredentialsFile = new SharedCredentialsFile(awsOptions.ProfilesLocation);
         
@@ -36,7 +68,6 @@ public static class DependencyInjection
         };
 
         services.AddSingleton<IAmazonS3>(sp => new AmazonS3Client(awsCredentials, amazonS3Config));
-        services.AddScoped<IImageService, ImageService>();
 
         return services;
     }

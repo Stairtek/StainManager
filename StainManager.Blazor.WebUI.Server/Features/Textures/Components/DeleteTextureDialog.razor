@@ -1,0 +1,93 @@
+@using StainManager.Blazor.WebUI.Server.Features.Textures.Models
+@using StainManager.Blazor.WebUI.Server.Features.Textures.Services
+
+@inject ITexturesService TexturesService
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.Delete" Class="mr-3 mb-n1" />
+            Delete Texture?
+        </MudText>
+    </TitleContent>
+
+    <DialogContent>
+        <MudTextField
+            Value="_texture.Name"
+            Label="Name"
+            ReadOnly="true" />
+    </DialogContent>
+    
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton
+            Color="Color.Error"
+            Variant="Variant.Filled"
+            Disabled="!_textureLoaded"
+            OnClick="Delete">
+            Delete
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+<MudOverlay Visible="_isLoading" DarkBackground="true" Absolute="true">
+    <MudProgressCircular Color="Color.Secondary" Indeterminate="true" />
+</MudOverlay>
+
+@code {
+    [CascadingParameter]
+    public required IMudDialogInstance MudDialog { get; set; }
+    
+    [Parameter]
+    public int? Id { get; set; }
+    
+    
+    private TextureModel _texture = new();
+    private bool _isLoading;
+    private bool _textureLoaded;
+
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await LoadTexture();
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadTexture()
+    {
+        if (Id is null or 0) return;
+        
+        _isLoading = true;
+        var result = await TexturesService.GetTextureByIdAsync(Id.Value);
+        _isLoading = false;
+        
+        if (result is { Failure: true } || result.Value is null)
+        {
+            Snackbar.Add(result.GetErrorMessage("Failed to load texture"), Severity.Error);
+            return;
+        }
+        
+        _texture = result.Value;
+        _textureLoaded = true;
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+    
+    private async Task Delete()
+    {
+        _isLoading = true;
+        var result = await TexturesService.DeleteTextureAsync(_texture.Id);
+        _isLoading = false;
+        
+        if (result is { Failure: true })
+        {
+            Snackbar.Add(result.GetErrorMessage("Failed to delete texture"), Severity.Error);
+            return;
+        }        
+        
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+}
