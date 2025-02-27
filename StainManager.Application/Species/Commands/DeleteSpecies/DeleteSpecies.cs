@@ -20,8 +20,8 @@ public class DeleteSpeciesCommandHandler(
         var result = await speciesRepository
             .DeleteSpeciesAsync(request.Id);
 
-        return !result
-            ? Result.Fail("Failed to delete species")
-            : Result.Ok();
+        return result
+            ? Result.Ok()
+            : Result.Fail<object>("Failed to delete species", true);
     }
 }

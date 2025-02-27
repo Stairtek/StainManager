@@ -21,7 +21,7 @@ public class GetSpeciesByIdQueryHandler(
             .GetSpeciesByIdAsync(request.Id);
         
         if (species is null)
-            return Result.Fail<SpeciesResponse>($"Species with ID {request.Id} not found.");
+            return Result.Fail<SpeciesResponse>($"Species with ID {request.Id} not found.", true);
         
         var response = species.Adapt<SpeciesResponse>();
 

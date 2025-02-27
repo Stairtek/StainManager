@@ -4,21 +4,26 @@ namespace StainManager.Blazor.WebUI.Server.Common.Models;
 
 public class Result
 {
-    public Result() { }
-
-    public Result(
-        bool success,
-        string? error = null)
-    {
-        Success = success;
-        Error = error;
-    }
-
     public bool Success { get; set; }
 
     public bool Failure => !Success;
     
     public string? Error { get; set; }
+
+    public bool HandledError { get; set; }
+    
+    
+    public Result() { }
+
+    public Result(
+        bool success,
+        string? error = null,
+        bool handledError = false)
+    {
+        Success = success;
+        Error = error;
+        HandledError = handledError;
+    }
 
 
     public static Result Ok()
@@ -35,32 +40,59 @@ public class Result
     {
         return new Result<T>(value, true);
     }
-
-    public static Result<T> Fail<T>(string? errorMessage)
+    
+    public static Result<T> Fail<T>(string? errorMessage, bool handledError = false)
     {
-        return new Result<T>(default, false, errorMessage);
+        return new Result<T>(default, false, errorMessage, handledError);
     }
 
     public static Result<T> FromValue<T>(T? value)
     {
         return value != null ? Ok(value) : Fail<T>("Provided value is null");
     }
+    
+    public string GetErrorMessage(string errorMessage)
+    {
+        if (Success)
+            return string.Empty;
+
+        const string defaultErrorMessage = "Something Unexpected Happened.";
+
+        if (!HandledError)
+        {
+            return string.IsNullOrEmpty(errorMessage)
+                ? defaultErrorMessage
+                : errorMessage;
+        }
+        
+        if (string.IsNullOrEmpty(Error) && string.IsNullOrEmpty(errorMessage))
+            return defaultErrorMessage;
+            
+        return string.IsNullOrEmpty(Error) 
+            ? errorMessage 
+            : Error;
+    }
 }
 
 public class Result<T> : Result
 {
+    public T? Value { get; set; }
+    
+    
     public Result() { }
     
     public Result(
         T? value,
         bool success,
-        string? error = null)
-        : base(success, error)
+        string? error = null,
+        bool handledError = false)
+        : base(success, error, handledError)
     {
         Value = value;
     }
 
-    public T? Value { get; set; }
+    
+    
 
     public static implicit operator Result<T>(T value)
     {

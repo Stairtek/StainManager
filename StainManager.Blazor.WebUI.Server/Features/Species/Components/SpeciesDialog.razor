@@ -196,7 +196,7 @@
     
         if (result.Value is null || result.Failure)
         {
-            Snackbar.Add("Failed to upload image", Severity.Error);
+            Snackbar.Add(result.GetErrorMessage("Failed to upload image"), Severity.Error);
             return;
         }
         
@@ -241,12 +241,7 @@
         
         if (uploadResult.Failure || uploadResult.Value == null)
         {
-            var errorMessage = "Failed to upload image";
-            
-            if (!string.IsNullOrEmpty(uploadResult.Error))
-                errorMessage += $":<br/>{uploadResult.Error}";
-            
-            Snackbar.Add(new MarkupString(errorMessage), Severity.Error);
+            Snackbar.Add(uploadResult.GetErrorMessage("Failed to upload image"), Severity.Error);
             return false;
         }
         
@@ -283,7 +278,7 @@
         if (result is { Failure: false })
         {
             var failedMessage = $"Failed to {(Id is null or 0 ? "add" : "update")} species";
-            Snackbar.Add(failedMessage, Severity.Error);
+            Snackbar.Add(result.GetErrorMessage(failedMessage), Severity.Error);
             return;
         }
 

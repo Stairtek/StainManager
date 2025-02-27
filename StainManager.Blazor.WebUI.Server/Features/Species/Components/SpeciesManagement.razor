@@ -190,7 +190,7 @@
 
         if (speciesManagement.Failure)
         {
-            Snackbar.Add("Failed to load species", Severity.Error);
+            Snackbar.Add(speciesManagement.GetErrorMessage("Failed to load species"), Severity.Error);
             return new GridData<SpeciesManagementModel>();
         }
 
@@ -282,7 +282,7 @@
 
         if (result is { Success: false })
         {
-            Snackbar.Add("Failed to restore species", Severity.Error);
+            Snackbar.Add(result.GetErrorMessage("Failed to restore species"), Severity.Error);
             return;
         }
 

@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Mvc;
 using StainManager.Application.TempImage.Commands;
 
@@ -11,8 +10,7 @@ public class TempImage : EndpointGroupBase
         app.MapGroup(this)
             .MapPost(UploadTempImage);
     }
-
-    [ValidateAntiForgeryToken]
+    
     public async Task<IResult> UploadTempImage(
         ISender sender,
         [FromBody] UploadTempImageCommand command)

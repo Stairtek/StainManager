@@ -27,7 +27,13 @@
     
     <DialogActions>
         <MudButton OnClick="Cancel">Cancel</MudButton>
-        <MudButton Color="Color.Error" Variant="Variant.Filled" OnClick="Delete">Delete</MudButton>
+        <MudButton
+            Color="Color.Error"
+            Variant="Variant.Filled"
+            Disabled="!_speciesLoaded"
+            OnClick="Delete">
+            Delete
+        </MudButton>
     </DialogActions>
 </MudDialog>
 
@@ -45,6 +51,7 @@
     
     private SpeciesModel _species = new();
     private bool _isLoading;
+    private bool _speciesLoaded;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -60,28 +67,30 @@
         if (Id is null or 0) return;
         
         _isLoading = true;
-        var response = await SpeciesService.GetSpeciesById(2);
+        var result = await SpeciesService.GetSpeciesById(Id.Value);
         _isLoading = false;
 
-        if (response.Failure || response.Value is null)
+        if (result.Failure || result.Value is null)
         {
-            Snackbar.Add(response.Error ?? "Failed to load species", Severity.Error);
-            MudDialog.Cancel();
+            Snackbar.Add(result.Error ?? "Failed to load species", Severity.Error);
             return;
         }
         
-        _species = response.Value;
+        _species = result.Value;
+        _speciesLoaded = true;
     }
     
     private void Cancel() => MudDialog.Cancel();
     
     private async Task Delete()
     {
-        var result = await SpeciesService.DeleteSpecies(2);
+        _isLoading = true;
+        var result = await SpeciesService.DeleteSpecies(_species.Id);
+        _isLoading = false;
         
-        if (result is { Failure: false })
+        if (result is { Failure: true })
         {
-            Snackbar.Add("Failed to delete species", Severity.Error);
+            Snackbar.Add(result.GetErrorMessage("Failed to delete species"), Severity.Error);
             return;
         }        
         

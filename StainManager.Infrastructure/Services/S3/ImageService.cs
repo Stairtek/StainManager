@@ -1,13 +1,15 @@
 using Amazon;
 using Amazon.S3;
 using Amazon.S3.Model;
+using StainManager.Application.Common.Helpers;
 using StainManager.Application.Services;
 using StainManager.Domain.Common;
 
 namespace StainManager.Infrastructure.Services.S3;
 
 public class ImageService(
-    IAmazonS3 s3Client)
+    IAmazonS3 s3Client,
+    ICodeGenerator codeGenerator)
     : IImageService
 {
     private static readonly RegionEndpoint BucketRegion = RegionEndpoint.USEast2;
@@ -21,8 +23,8 @@ public class ImageService(
         string directory,
         Guid id,
         string imageContent,
-        string fileName = "",
-        string mediaType = "image/jpg")
+        string? fileName = "",
+        string? mediaType = "image/jpg")
     {
         try
         {
@@ -32,7 +34,7 @@ public class ImageService(
             
             var uploadResult = await UploadToS3Async(fileKey, imageBytes, fileName, mediaType);
             if (!uploadResult.Success)
-                return Result.Fail<ImageUploadResult>("Failed to upload image");
+                return Result.Fail<ImageUploadResult>("Failed to upload image", true);
 
             var thumbnailKey = $"{MainDirectory}/{directory}/{id}_thumbnail.{fileExtension}";
             var thumbnail = await ImageHelper.CreateThumbnail(imageBytes);
@@ -44,7 +46,7 @@ public class ImageService(
                 mediaType);
             
             if (!thumbnailUploadResult.Success)
-                return Result.Fail<ImageUploadResult>("Failed to upload thumbnail image");
+                return Result.Fail<ImageUploadResult>("Failed to upload thumbnail image", true);
 
             var result = new ImageUploadResult
             {
@@ -68,8 +70,11 @@ public class ImageService(
         }
     }
     
-    private static string GetFileExtensionFromMediaType(string mediaType)
+    private static string GetFileExtensionFromMediaType(string? mediaType)
     {
+        if (mediaType is null)
+            throw new ArgumentException("Unsupported media type", nameof(mediaType));
+                
         return mediaType.ToLower() switch
         {
             "image/jpeg" => "jpg",
@@ -84,8 +89,8 @@ public class ImageService(
     private async Task<Result> UploadToS3Async(
         string fileKey, 
         byte[] fileBytes, 
-        string originalFileName, 
-        string contentType)
+        string? originalFileName, 
+        string? contentType)
     {
         using var memoryStream = new MemoryStream(fileBytes);
         var putObjectRequest = new PutObjectRequest
@@ -100,9 +105,10 @@ public class ImageService(
             putObjectRequest.Metadata.Add("OriginalFileName", originalFileName);
 
         var response = await s3Client.PutObjectAsync(putObjectRequest);
+        
         return response.HttpStatusCode == System.Net.HttpStatusCode.OK
             ? Result.Ok()
-            : Result.Fail("Failed to upload to S3");
+            : Result.Fail<object>("Failed to upload to S3", true);
     }
 
     public async Task<Result<ImageMoveResult>> MoveImagesAsync(
@@ -112,7 +118,7 @@ public class ImageService(
         int id)
     {
         if (fullImageLocation is null || thumbnailImageLocation is null)
-            return Result.Fail<ImageMoveResult>("Image Locations cannot be null");
+            return Result.Fail<ImageMoveResult>("Image Locations cannot be null", true);
         
         var moveFullImageResult = await MoveTempImageAsync(
             fullImageLocation,
@@ -120,7 +126,7 @@ public class ImageService(
             id);
         
         if (moveFullImageResult.Failure)
-            return Result.Fail<ImageMoveResult>(moveFullImageResult.Error);
+            return Result.Fail<ImageMoveResult>(moveFullImageResult.Error, moveFullImageResult.HandledError);
         
         var moveThumbnailImageResult = await MoveTempImageAsync(
             thumbnailImageLocation,
@@ -129,7 +135,7 @@ public class ImageService(
             true);
 
         if (moveThumbnailImageResult.Failure)
-            return Result.Fail<ImageMoveResult>(moveThumbnailImageResult.Error);
+            return Result.Fail<ImageMoveResult>(moveThumbnailImageResult.Error, moveThumbnailImageResult.HandledError);
         
         var result = new ImageMoveResult
         {
@@ -149,14 +155,15 @@ public class ImageService(
         try
         {
             if (tempImageURL is null)
-                return Result.Fail<string>("Temporary image URL is null");
+                return Result.Fail<string>("Temporary image URL is null", true);
             
             var tempImageFileKey = tempImageURL.Replace(FileKeyPrefixURL, string.Empty);
             var fileExtension = Path.GetExtension(tempImageFileKey);
-            var newFileKey = $"{MainDirectory}/{directory}/{id}.{fileExtension}";
+            var uniqueId = codeGenerator.GenerateCode(6);
+            var newFileKey = $"{MainDirectory}/{directory}/{id}_{uniqueId}.{fileExtension}";
             
             if (isThumbnail)
-                newFileKey = $"{MainDirectory}/{directory}/{id}_thumbnail.{fileExtension}";
+                newFileKey = $"{MainDirectory}/{directory}/{id}_thumbnail_{uniqueId}.{fileExtension}";
             
             var copyRequest = new CopyObjectRequest
             {
@@ -169,7 +176,7 @@ public class ImageService(
             var copyResponse = await s3Client.CopyObjectAsync(copyRequest);
             
             if (copyResponse.HttpStatusCode != System.Net.HttpStatusCode.OK)
-                return Result.Fail<string>("Failed to copy image to new location");
+                return Result.Fail<string>("Failed to copy image to new location", true);
             
             var deleteRequest = new DeleteObjectRequest
             {
@@ -180,7 +187,7 @@ public class ImageService(
             var deleteResponse = await s3Client.DeleteObjectAsync(deleteRequest);
             
             if (deleteResponse.HttpStatusCode != System.Net.HttpStatusCode.NoContent)
-                return Result.Fail<string>("Failed to delete temporary image");
+                return Result.Fail<string>("Failed to delete temporary image", true);
             
             return Result.Ok($"{FileKeyPrefixURL}{newFileKey}");
         }

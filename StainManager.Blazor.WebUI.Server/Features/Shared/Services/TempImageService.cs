@@ -20,10 +20,11 @@ public interface ITempImageService
 }
 
 public class TempImageService(
-    HttpClient http,
+    IHttpClientFactory httpClientFactory,
     ILogger<TempImageService> logger)
     : ITempImageService
 {
+    private readonly HttpClient _http = httpClientFactory.CreateClient("StainManagerAPI");
     private const string BaseUrl = "TempImage";
 
     public ImageValidationResult ValidateImage(IBrowserFile? file)
@@ -71,7 +72,7 @@ public class TempImageService(
             Content = JsonContent.Create(imageConfigurationModel)
         };
             
-        var response = await http.SendAsync(request);
+        var response = await _http.SendAsync(request);
         var result = await response.Content.ReadFromJsonAsync<Result<ImageUploadResponse>>();
 
         if (result is not null) 

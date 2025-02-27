@@ -8,8 +8,8 @@ public interface IImageService
         string directory,
         Guid id,
         string imageContent,
-        string fileName = "",
-        string mediaType = "image/jpg");
+        string? fileName = "",
+        string? mediaType = "image/jpg");
 
     Task<Result<ImageMoveResult>> MoveImagesAsync(
         string? fullImageLocation,

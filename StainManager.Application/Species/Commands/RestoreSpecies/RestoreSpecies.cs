@@ -21,7 +21,7 @@ public class RestoreSpeciesCommandHandler(
             .RestoreSpeciesAsync(request.Id);
 
         return !result
-            ? Result.Fail("Failed to restore species")
+            ? Result.Fail<object>("Failed to restore species", true)
             : Result.Ok();
     }
 }

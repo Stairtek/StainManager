@@ -28,7 +28,8 @@ public class CustomExceptionHandler
         };
     }
 
-    public async ValueTask<bool> TryHandleAsync(HttpContext httpContext,
+    public async ValueTask<bool> TryHandleAsync(
+        HttpContext httpContext,
         Exception exception,
         CancellationToken cancellationToken)
     {
@@ -42,28 +43,30 @@ public class CustomExceptionHandler
         return true;
     }
 
-    private async Task HandleValidationException(HttpContext httpContext,
+    private async Task HandleValidationException(
+        HttpContext httpContext,
         Exception ex)
     {
         var exception = (ValidationException)ex;
 
         httpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
         
-        var failResult = Result.Fail("One or more validation errors occurred.");
+        var failResult = Result.Fail<object>("One or more validation errors occurred.", true);
         
         _logger.LogError("Validation error: {Message}", exception.Message);
         
         await httpContext.Response.WriteAsJsonAsync(failResult);
     }
 
-    private async Task HandleNotFoundException(HttpContext httpContext,
+    private async Task HandleNotFoundException(
+        HttpContext httpContext,
         Exception ex)
     {
         var exception = (NotFoundException)ex;
 
         httpContext.Response.StatusCode = StatusCodes.Status404NotFound;
         
-        var failResult = Result.Fail("The specified resource was not found.");
+        var failResult = Result.Fail<object>("The specified resource was not found.", true);
         
         _logger.LogError("Not found error: {Message}", exception.Message);
         
@@ -76,7 +79,7 @@ public class CustomExceptionHandler
     {
         httpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
 
-        var failResult = Result.Fail($"An unexpected error occurred. {ex.Message}");
+        var failResult = Result.Fail<object>($"An unexpected error occurred. {ex.Message}");
         
         _logger.LogError("Unexpected error: {Message}", ex.Message);
         

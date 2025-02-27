@@ -18,11 +18,13 @@ public static class HttpClientExtensions
             return result ?? Result.Fail<T>("Failed to deserialize response");
         }
         
+        var test = await response.Content.ReadAsStringAsync();
         var errorResult = await response.Content.ReadFromJsonAsync<Result<T>>(DefaultJsonOptions);
         
-        return errorResult is null 
-            ? Result.Fail<T>("Failed to get response") 
-            : Result.Fail<T>(errorResult.Error ?? "Failed to get response");
+        if (errorResult is null || string.IsNullOrEmpty(errorResult.Error))
+            return Result.Fail<T>("Failed to get response");
+
+        return Result.Fail<T>(errorResult.Error, errorResult.HandledError);
     }
     
     

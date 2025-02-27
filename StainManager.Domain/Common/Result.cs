@@ -2,19 +2,25 @@ namespace StainManager.Domain.Common;
 
 public class Result
 {
-    protected Result(
-        bool success,
-        string? errorMessage = null)
-    {
-        Success = success;
-        Error = errorMessage;
-    }
-
     public bool Success { get; }
 
     public bool Failure => !Success;
 
     public string? Error { get; }
+    
+    public bool HandledError { get; set; }
+    
+    
+    protected Result(
+        bool success,
+        string? errorMessage = null,
+        bool handledError = false)
+    {
+        Success = success;
+        Error = errorMessage;
+        HandledError = handledError;
+    }
+
 
 
     public static Result Ok()
@@ -32,9 +38,9 @@ public class Result
         return new Result<T>(value, true);
     }
 
-    public static Result<T> Fail<T>(string? errorMessage)
+    public static Result<T> Fail<T>(string? errorMessage, bool handledError = false)
     {
-        return new Result<T>(default, false, errorMessage);
+        return new Result<T>(default, false, errorMessage, handledError);
     }
     
     public static Result<T> Fail<T>(string errorMessage, T? value)
@@ -53,8 +59,9 @@ public class Result<T> : Result
     protected internal Result(
         T? value,
         bool success,
-        string? errorMessage = null)
-        : base(success, errorMessage)
+        string? errorMessage = null,
+        bool handledError = false)
+        : base(success, errorMessage, handledError)
     {
         Value = value;
     }

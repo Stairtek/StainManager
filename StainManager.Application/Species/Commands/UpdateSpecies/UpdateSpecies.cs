@@ -50,7 +50,7 @@ public class UpdateSpeciesCommandHandler(
                 updatedSpecies.Id);
         
             if (moveImagesResult.Failure)
-                return Result.Fail<SpeciesResponse?>(moveImagesResult.Error);
+                return Result.Fail<SpeciesResponse?>(moveImagesResult.Error, moveImagesResult.HandledError);
             
             updatedSpecies.FullImageLocation = moveImagesResult.Value?.FullImageLocation;
             updatedSpecies.ThumbnailImageLocation = moveImagesResult.Value?.ThumbnailImageLocation;

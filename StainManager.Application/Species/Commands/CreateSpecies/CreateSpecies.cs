@@ -46,7 +46,7 @@ public class CreateSpeciesCommandHandler(
             species.Id);
         
         if (moveImagesResult.Failure)
-            return Result.Fail<SpeciesResponse>(moveImagesResult.Error);
+            return Result.Fail<SpeciesResponse>(moveImagesResult.Error, moveImagesResult.HandledError);
         
         species.FullImageLocation = moveImagesResult.Value?.FullImageLocation;
         species.ThumbnailImageLocation = moveImagesResult.Value?.ThumbnailImageLocation;
@@ -57,7 +57,7 @@ public class CreateSpeciesCommandHandler(
             species.ThumbnailImageLocation);
             
         if (updateSpeciesResult is false)
-            return Result.Fail<SpeciesResponse>("Failed to update species image locations");
+            return Result.Fail<SpeciesResponse>("Failed to update species image locations", true);
 
         return species.Adapt<SpeciesResponse>();
     }
