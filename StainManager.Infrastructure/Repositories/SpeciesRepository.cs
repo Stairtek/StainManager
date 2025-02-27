@@ -42,7 +42,8 @@ public class SpeciesRepository(
         return result;
     }
 
-    public async Task<Species?> GetSpeciesByIdAsync(int id,
+    public async Task<Species?> GetSpeciesByIdAsync(
+        int id,
         bool includeInactive = false)
     {
         var speciesQuery = context.Species
