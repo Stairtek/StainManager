@@ -5,7 +5,6 @@ using StainManager.Application.Species.Commands.UpdateSpecies;
 using StainManager.Application.Species.Queries.GetSpecies;
 using StainManager.Application.Species.Queries.GetSpeciesById;
 using StainManager.Application.Species.Queries.GetSpeciesForManagement;
-using StainManager.Domain.Common;
 
 namespace StainManager.WebAPI.Endpoints;
 
