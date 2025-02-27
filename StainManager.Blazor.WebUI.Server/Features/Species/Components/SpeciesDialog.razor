@@ -275,7 +275,7 @@
 
         _isLoading = false;
         
-        if (result is { Failure: false })
+        if (result is { Failure: true })
         {
             var failedMessage = $"Failed to {(Id is null or 0 ? "add" : "update")} species";
             Snackbar.Add(result.GetErrorMessage(failedMessage), Severity.Error);

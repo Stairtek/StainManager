@@ -160,10 +160,10 @@ public class ImageService(
             var tempImageFileKey = tempImageURL.Replace(FileKeyPrefixURL, string.Empty);
             var fileExtension = Path.GetExtension(tempImageFileKey);
             var uniqueId = codeGenerator.GenerateCode(6);
-            var newFileKey = $"{MainDirectory}/{directory}/{id}_{uniqueId}.{fileExtension}";
+            var newFileKey = $"{MainDirectory}/{directory}/{id}_{uniqueId}{fileExtension}";
             
             if (isThumbnail)
-                newFileKey = $"{MainDirectory}/{directory}/{id}_thumbnail_{uniqueId}.{fileExtension}";
+                newFileKey = $"{MainDirectory}/{directory}/{id}_thumbnail_{uniqueId}{fileExtension}";
             
             var copyRequest = new CopyObjectRequest
             {
