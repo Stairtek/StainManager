@@ -78,38 +78,39 @@ public class Species : EndpointGroupBase
 
     public async Task<IResult> CreateSpecies(
         ISender sender,
-        CreateSpeciesCommand createSpeciesCommand)
+        CreateSpeciesCommand command)
     {
-        var createResult = await sender.Send(createSpeciesCommand);
+        var result = await sender.Send(command);
 
-        return createResult.Failure
-            ? Results.BadRequest(createResult)
-            : Results.Created($"/{createResult.Value.Id}", createResult);
+        return result.Failure
+            ? Results.BadRequest(result)
+            : Results.Created($"/{result.Value.Id}", result);
     }
 
     public async Task<IResult> UpdateSpecies(
         ISender sender,
         int id,
-        UpdateSpeciesCommand updateSpeciesCommand)
+        UpdateSpeciesCommand command)
     {
-        if (id != updateSpeciesCommand.Id)
+        if (id != command.Id)
             return Results.BadRequest();
 
-        var updateResult = await sender.Send(updateSpeciesCommand);
+        var result = await sender.Send(command);
 
-        return updateResult.Failure
-            ? Results.BadRequest(updateResult)
-            : Results.Ok(updateResult);
+        return result.Failure
+            ? Results.BadRequest(result)
+            : Results.Ok(result);
     }
 
     public async Task<IResult> DeleteSpecies(
         ISender sender,
         int id)
     {
-        var deleteResult = await sender.Send(new DeleteSpeciesCommand { Id = id });
+        var command = new DeleteSpeciesCommand { Id = id };
+        var result = await sender.Send(command);
 
-        return deleteResult.Failure
-            ? Results.BadRequest(deleteResult)
+        return result.Failure
+            ? Results.BadRequest(result)
             : Results.Ok();
     }
 
@@ -117,10 +118,11 @@ public class Species : EndpointGroupBase
         ISender sender,
         int id)
     {
-        var restoreResult = await sender.Send(new RestoreSpeciesCommand { Id = id });
+        var command = new RestoreSpeciesCommand { Id = id };
+        var result = await sender.Send(command);
 
-        return restoreResult.Failure
-            ? Results.BadRequest(restoreResult)
+        return result.Failure
+            ? Results.BadRequest(result)
             : Results.Ok();
     }
 }
