@@ -60,25 +60,26 @@
         if (Id is null or 0) return;
         
         _isLoading = true;
-        var response = await SpeciesService.GetSpeciesById(Id.Value);
+        var response = await SpeciesService.GetSpeciesById(2);
         _isLoading = false;
-        
-        if (response == null)
+
+        if (response.Failure || response.Value is null)
         {
-            Snackbar.Add("Failed to load species", Severity.Error);
+            Snackbar.Add(response.Error ?? "Failed to load species", Severity.Error);
+            MudDialog.Cancel();
             return;
         }
         
-        _species = response;
+        _species = response.Value;
     }
     
     private void Cancel() => MudDialog.Cancel();
     
     private async Task Delete()
     {
-        var result = await SpeciesService.DeleteSpecies(_species.Id);
+        var result = await SpeciesService.DeleteSpecies(2);
         
-        if (!result.IsSuccessStatusCode)
+        if (result is { Failure: false })
         {
             Snackbar.Add("Failed to delete species", Severity.Error);
             return;

@@ -31,8 +31,8 @@ public class Species : EndpointGroupBase
         var result = await sender.Send(query);
 
         return result.Failure
-            ? Results.BadRequest(result.Error)
-            : Results.Ok(result.Value);
+            ? Results.BadRequest(result)
+            : Results.Ok(result);
     }
 
     public async Task<IResult> GetSpeciesForManagement(
@@ -61,8 +61,8 @@ public class Species : EndpointGroupBase
         var result = await sender.Send(query);
 
         return result.Failure
-            ? Results.BadRequest(result.Error)
-            : Results.Ok(result.Value);
+            ? Results.BadRequest(result)
+            : Results.Ok(result);
     }
 
     public async Task<IResult> GetSpeciesById(
@@ -73,8 +73,8 @@ public class Species : EndpointGroupBase
         var result = await sender.Send(query);
 
         return result.Failure
-            ? Results.BadRequest(result.Error)
-            : Results.Ok(result.Value);
+            ? Results.BadRequest(result)
+            : Results.Ok(result);
     }
 
     public async Task<IResult> CreateSpecies(
@@ -84,8 +84,8 @@ public class Species : EndpointGroupBase
         var createResult = await sender.Send(createSpeciesCommand);
 
         return createResult.Failure
-            ? Results.BadRequest(createResult.Error)
-            : Results.Created($"/{createResult.Value.Id}", createResult.Value);
+            ? Results.BadRequest(createResult)
+            : Results.Created($"/{createResult.Value.Id}", createResult);
     }
 
     public async Task<IResult> UpdateSpecies(
@@ -99,8 +99,8 @@ public class Species : EndpointGroupBase
         var updateResult = await sender.Send(updateSpeciesCommand);
 
         return updateResult.Failure
-            ? Results.BadRequest(updateResult.Error)
-            : Results.Ok(updateResult.Value);
+            ? Results.BadRequest(updateResult)
+            : Results.Ok(updateResult);
     }
 
     public async Task<IResult> DeleteSpecies(
@@ -110,7 +110,7 @@ public class Species : EndpointGroupBase
         var deleteResult = await sender.Send(new DeleteSpeciesCommand { Id = id });
 
         return deleteResult.Failure
-            ? Results.BadRequest(deleteResult.Error)
+            ? Results.BadRequest(deleteResult)
             : Results.Ok();
     }
 
@@ -121,7 +121,7 @@ public class Species : EndpointGroupBase
         var restoreResult = await sender.Send(new RestoreSpeciesCommand { Id = id });
 
         return restoreResult.Failure
-            ? Results.BadRequest(restoreResult.Error)
+            ? Results.BadRequest(restoreResult)
             : Results.Ok();
     }
 }

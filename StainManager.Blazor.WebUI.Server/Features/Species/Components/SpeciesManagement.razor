@@ -1,4 +1,5 @@
 @page "/species"
+@using StainManager.Blazor.WebUI.Server.Common.Models
 @using StainManager.Blazor.WebUI.Server.Features.Species.Models
 @using StainManager.Blazor.WebUI.Server.Features.Species.Services
 
@@ -187,10 +188,16 @@
             state.SortDefinitions.FirstOrDefault(),
             state.FilterDefinitions);
 
+        if (speciesManagement.Failure)
+        {
+            Snackbar.Add("Failed to load species", Severity.Error);
+            return new GridData<SpeciesManagementModel>();
+        }
+
         return new GridData<SpeciesManagementModel>
         {
-            TotalItems = speciesManagement?.TotalCount ?? 0,
-            Items = speciesManagement?.Items ?? []
+            TotalItems = speciesManagement.Value?.TotalCount ?? 0,
+            Items = speciesManagement.Value?.Items ?? []
         };
     }
 
@@ -273,7 +280,7 @@
     {
         var result = await SpeciesService.RestoreSpecies(speciesId);
 
-        if (!result.IsSuccessStatusCode)
+        if (result is { Success: false })
         {
             Snackbar.Add("Failed to restore species", Severity.Error);
             return;

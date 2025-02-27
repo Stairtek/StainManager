@@ -229,7 +229,8 @@
             "Configure Image", 
             parameters,
             options);
-        var dialogResult = await dialog.Result;
+        
+        await dialog.Result;
     }
 
     private async Task<bool> OnImageConfiguredAsync(ImageConfigurationModel imageConfigurationModel)
@@ -268,7 +269,7 @@
         if (!_form.IsValid)
             return;
 
-        HttpResponseMessage result;
+        Result<SpeciesModel>? result;
 
         _isLoading = true;
         
@@ -279,7 +280,7 @@
 
         _isLoading = false;
         
-        if (!result.IsSuccessStatusCode)
+        if (result is { Failure: false })
         {
             var failedMessage = $"Failed to {(Id is null or 0 ? "add" : "update")} species";
             Snackbar.Add(failedMessage, Severity.Error);

@@ -3,6 +3,7 @@ using MudBlazor.Services;
 using StainManager.Blazor.WebUI.Server;
 using StainManager.Blazor.WebUI.Server.Features.Shared.Services;
 using StainManager.Blazor.WebUI.Server.Features.Species.Services;
+using StainManager.Blazor.WebUI.Server.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,15 +28,15 @@ builder.Services.AddSignalR(options =>
     options.MaximumReceiveMessageSize = 10 * 1024 * 1024; // Set the maximum message size to 10MB
 });
 
-builder.Services.AddScoped(sp => new HttpClient
-{
-    BaseAddress = new Uri(builder.Configuration["ApiBaseAddress"] ?? string.Empty)
-});
-
 builder.Services.AddScoped<ISpeciesService, SpeciesService>();
 builder.Services.AddScoped<ITempImageService, TempImageService>();
 
 builder.Services.AddHttpContextAccessor();
+
+builder.Services.AddHttpClient("StainManagerAPI", client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["ApiBaseAddress"] ?? string.Empty);
+});
 
 var app = builder.Build();
 
@@ -50,6 +51,8 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseAntiforgery();
+
+app.UseMiddleware<ExceptionMiddleware>();
 
 app.MapStaticAssets();
 app.MapRazorComponents<App>()

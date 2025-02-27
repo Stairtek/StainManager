@@ -36,6 +36,11 @@ public class Result
     {
         return new Result<T>(default, false, errorMessage);
     }
+    
+    public static Result<T> Fail<T>(string errorMessage, T? value)
+    {
+        return new Result<T>(value, false, errorMessage);
+    }
 
     public static Result<T> FromValue<T>(T? value)
     {

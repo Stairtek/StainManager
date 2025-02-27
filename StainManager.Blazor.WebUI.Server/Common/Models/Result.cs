@@ -4,9 +4,9 @@ namespace StainManager.Blazor.WebUI.Server.Common.Models;
 
 public class Result
 {
-    protected Result() { }
+    public Result() { }
 
-    protected Result(
+    public Result(
         bool success,
         string? error = null)
     {

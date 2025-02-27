@@ -2,20 +2,27 @@ using Ardalis.GuardClauses;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using StainManager.Application.Common.Exceptions;
+using StainManager.Domain.Common;
 
 namespace StainManager.WebAPI.Infrastructure;
 
-public class CustomExceptionHandler : IExceptionHandler
+public class CustomExceptionHandler
+    : IExceptionHandler
 {
     private readonly Dictionary<Type, Func<HttpContext, Exception, Task>> _exceptionHandlers;
+    private readonly ILogger<CustomExceptionHandler> _logger;
 
-    public CustomExceptionHandler()
+    public CustomExceptionHandler(
+        ILogger<CustomExceptionHandler> logger)
     {
+        _logger = logger;
+        
         // Register known exception types and handlers.
         _exceptionHandlers = new Dictionary<Type, Func<HttpContext, Exception, Task>>
         {
             { typeof(ValidationException), HandleValidationException },
-            { typeof(NotFoundException), HandleNotFoundException }
+            { typeof(NotFoundException), HandleNotFoundException },
+            { typeof(Exception), HandleUnexpectedException }
             //{ typeof(UnauthorizedAccessException), HandleUnauthorizedAccessException },
             //{ typeof(ForbiddenAccessException), HandleForbiddenAccessException },
         };
@@ -41,12 +48,12 @@ public class CustomExceptionHandler : IExceptionHandler
         var exception = (ValidationException)ex;
 
         httpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
-
-        await httpContext.Response.WriteAsJsonAsync(new ValidationProblemDetails(exception.Errors)
-        {
-            Status = StatusCodes.Status400BadRequest,
-            Type = "https://tools.ietf.org/html/rfc7231#section-6.5.1"
-        });
+        
+        var failResult = Result.Fail("One or more validation errors occurred.");
+        
+        _logger.LogError("Validation error: {Message}", exception.Message);
+        
+        await httpContext.Response.WriteAsJsonAsync(failResult);
     }
 
     private async Task HandleNotFoundException(HttpContext httpContext,
@@ -55,14 +62,25 @@ public class CustomExceptionHandler : IExceptionHandler
         var exception = (NotFoundException)ex;
 
         httpContext.Response.StatusCode = StatusCodes.Status404NotFound;
+        
+        var failResult = Result.Fail("The specified resource was not found.");
+        
+        _logger.LogError("Not found error: {Message}", exception.Message);
+        
+        await httpContext.Response.WriteAsJsonAsync(failResult);
+    }
+    
+    private async Task HandleUnexpectedException(
+        HttpContext httpContext,
+        Exception ex)
+    {
+        httpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
 
-        await httpContext.Response.WriteAsJsonAsync(new ProblemDetails
-        {
-            Status = StatusCodes.Status404NotFound,
-            Type = "https://tools.ietf.org/html/rfc7231#section-6.5.4",
-            Title = "The specified resource was not found.",
-            Detail = exception.Message
-        });
+        var failResult = Result.Fail($"An unexpected error occurred. {ex.Message}");
+        
+        _logger.LogError("Unexpected error: {Message}", ex.Message);
+        
+        await httpContext.Response.WriteAsJsonAsync(failResult);
     }
 
     // private async Task HandleUnauthorizedAccessException(HttpContext httpContext, Exception ex)

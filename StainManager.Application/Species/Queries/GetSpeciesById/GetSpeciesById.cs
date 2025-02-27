@@ -19,6 +19,10 @@ public class GetSpeciesByIdQueryHandler(
     {
         var species = await speciesRepository
             .GetSpeciesByIdAsync(request.Id);
+        
+        if (species is null)
+            return Result.Fail<SpeciesResponse>($"Species with ID {request.Id} not found.");
+        
         var response = species.Adapt<SpeciesResponse>();
 
         return response;
