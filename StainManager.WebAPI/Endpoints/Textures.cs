@@ -13,7 +13,14 @@ public class Textures
 {
     public override void Map(WebApplication app)
     {
-        app.MapGroup(this);
+        app.MapGroup(this)
+            .MapGet(GetTextures)
+            .MapGet(GetTexturesForManagement, "management")
+            .MapGet(GetTextureById, "{id}")
+            .MapPost(CreateTexture)
+            .MapPut(UpdateTexture, "{id}")
+            .MapPut(RestoreTexture, "{id}/restore")
+            .MapDelete(DeleteTexture, "{id}");
     }
     
     public async Task<IResult> GetTextures(
