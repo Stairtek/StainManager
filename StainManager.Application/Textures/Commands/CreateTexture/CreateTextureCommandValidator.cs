@@ -7,6 +7,6 @@ public class CreateTextureCommandValidator
     {
         RuleFor(c => c.Name)
             .NotEmpty().WithMessage("Name is required.")
-            .MaximumLength(200).WithMessage("Name must not exceed 200 characters.");
+            .MaximumLength(50).WithMessage("Name must not exceed 50 characters.");
     }
 }

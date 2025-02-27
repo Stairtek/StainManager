@@ -167,7 +167,7 @@
         if (Id is null or 0) return;
 
         _isLoading = true;
-        var response = await SpeciesService.GetSpeciesById(Id.Value);
+        var response = await SpeciesService.GetSpeciesByIdAsync(Id.Value);
         _isLoading = false;
 
         if (response == null)
@@ -269,9 +269,9 @@
         _isLoading = true;
         
         if (Id is null or 0)
-            result = await SpeciesService.CreateSpecies(_species);
+            result = await SpeciesService.CreateSpeciesAsync(_species);
         else
-            result = await SpeciesService.UpdateSpecies(_species);
+            result = await SpeciesService.UpdateSpeciesAsync(_species);
 
         _isLoading = false;
         

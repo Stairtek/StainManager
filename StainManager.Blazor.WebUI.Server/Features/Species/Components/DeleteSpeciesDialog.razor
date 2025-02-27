@@ -67,7 +67,7 @@
         if (Id is null or 0) return;
         
         _isLoading = true;
-        var result = await SpeciesService.GetSpeciesById(Id.Value);
+        var result = await SpeciesService.GetSpeciesByIdAsync(Id.Value);
         _isLoading = false;
 
         if (result.Failure || result.Value is null)
@@ -85,7 +85,7 @@
     private async Task Delete()
     {
         _isLoading = true;
-        var result = await SpeciesService.DeleteSpecies(_species.Id);
+        var result = await SpeciesService.DeleteSpeciesAsync(_species.Id);
         _isLoading = false;
         
         if (result is { Failure: true })

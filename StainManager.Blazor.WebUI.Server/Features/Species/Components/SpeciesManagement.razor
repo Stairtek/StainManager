@@ -180,7 +180,7 @@
     private async Task<GridData<SpeciesManagementModel>> LoadSpecies(
         GridState<SpeciesManagementModel> state)
     {
-        var speciesManagement = await SpeciesService.GetSpeciesManagement(
+        var speciesManagement = await SpeciesService.GetSpeciesManagementAsync(
             _searchQuery,
             state.Page + 1, // 0-based index
             state.PageSize,
@@ -278,7 +278,7 @@
 
     private async Task RestoreSpecies(int speciesId)
     {
-        var result = await SpeciesService.RestoreSpecies(speciesId);
+        var result = await SpeciesService.RestoreSpeciesAsync(speciesId);
 
         if (result is { Success: false })
         {

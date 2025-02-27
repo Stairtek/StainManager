@@ -1,3 +1,4 @@
+using StainManager.Blazor.WebUI.Server.Extensions;
 using FluentValidation;
 
 namespace StainManager.Blazor.WebUI.Server.Features.Species.Models;
@@ -19,16 +20,6 @@ public class SpeciesFluentValidator : AbstractValidator<SpeciesModel>
                 .WithMessage("Abbreviation must be 3 characters.");
     }
     
-    public Func<object, string, Task<IEnumerable<string>>> ValidateValue => async (model, propertyName) =>
-    {
-        var result = await ValidateAsync(ValidationContext<SpeciesModel>
-            .CreateWithOptions(
-                (SpeciesModel)model, 
-                x => x.IncludeProperties(propertyName)));
-        
-        if (result.IsValid)
-            return Array.Empty<string>();
-        
-        return result.Errors.Select(e => e.ErrorMessage);
-    };
+    public Func<object, string, Task<IEnumerable<string>>> ValidateValue 
+        => this.ValidateValue<SpeciesModel>();
 }
