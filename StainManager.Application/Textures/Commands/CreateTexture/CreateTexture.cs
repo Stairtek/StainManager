@@ -25,6 +25,12 @@ public class CreateTextureCommandHandler(
         CancellationToken cancellationToken)
     {
         var newTexture = request.Adapt<Texture>();
+
+        var existingTextures = await textureRepository.GetAllTexturesAsync();
+        
+        if (existingTextures.Count != 0)
+            newTexture.SortOrder = existingTextures.Last().SortOrder + 1;
+        
         var texture = await textureRepository.CreateTextureAsync(newTexture);
         
         if (texture.FullImageLocation is null || texture.ThumbnailImageLocation is null) 

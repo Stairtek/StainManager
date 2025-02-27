@@ -11,6 +11,7 @@ public class TextureRepository(
     {
         var result = await context.Textures
             .Where(c => c.IsActive == isActive)
+            .OrderBy(c => c.SortOrder)
             .ToListAsync();
         
         return result;
@@ -25,7 +26,7 @@ public class TextureRepository(
     {
         var query = context.Textures
             .Where(c => c.IsActive == isActive)
-            .OrderBy(c => c.Name)
+            .OrderBy(c => c.SortOrder)
             .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(searchQuery))
@@ -102,6 +103,7 @@ public class TextureRepository(
         Guard.Against.NotFound(id, textureToDelete);
 
         textureToDelete.IsActive = false;
+        textureToDelete.SortOrder = -1;
         textureToDelete.UpdatedBy = "System";
         textureToDelete.UpdatedDateTime = DateTime.UtcNow;
 
@@ -113,8 +115,16 @@ public class TextureRepository(
         var textureToDelete = await GetTextureByIdAsync(id, true);
 
         Guard.Against.NotFound(id, textureToDelete);
+        
+        var existingTextures = await GetAllTexturesAsync();
 
         textureToDelete.IsActive = true;
+        
+        textureToDelete.SortOrder = 0;
+        
+        if (existingTextures.Count != 0)
+            textureToDelete.SortOrder = existingTextures.Last().SortOrder + 1;
+        
         textureToDelete.UpdatedBy = "System";
         textureToDelete.UpdatedDateTime = DateTime.UtcNow;
 

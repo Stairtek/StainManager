@@ -9,4 +9,6 @@ public class Texture : Entity
     public string? FullImageLocation { get; set; }
 
     public string? ThumbnailImageLocation { get; set; }
+    
+    public int SortOrder { get; set; }
 }
