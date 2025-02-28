@@ -59,11 +59,23 @@ public class TextureRepository(
 
     public async Task<Texture> CreateTextureAsync(Texture texture)
     {
+        texture.SortOrder = await GetNextSortOrder();
+        
         context.Textures.Add(texture);
         
         await context.SaveChangesAsync();
         
         return texture;
+    }
+    
+    private async Task<int> GetNextSortOrder()
+    {
+        var existingTextures = await GetAllTexturesAsync();
+        
+        if (existingTextures.Count == 0)
+            return 0;
+
+        return existingTextures.Last().SortOrder + 1;
     }
 
     public async Task<bool> UpdateTextureImageLocationsAsync(
@@ -106,6 +118,16 @@ public class TextureRepository(
         textureToDelete.SortOrder = -1;
         textureToDelete.UpdatedBy = "System";
         textureToDelete.UpdatedDateTime = DateTime.UtcNow;
+        
+        await context.SaveChangesAsync();
+        
+        var existingTextures = await GetAllTexturesAsync();
+        
+        if (existingTextures.Count == 0)
+            return true;
+        
+        for (var i = 0; i < existingTextures.Count; i++)
+            existingTextures[i].SortOrder = i;
 
         return await context.SaveChangesAsync() > 0;    
     }
@@ -116,15 +138,8 @@ public class TextureRepository(
 
         Guard.Against.NotFound(id, textureToDelete);
         
-        var existingTextures = await GetAllTexturesAsync();
-
         textureToDelete.IsActive = true;
-        
-        textureToDelete.SortOrder = 0;
-        
-        if (existingTextures.Count != 0)
-            textureToDelete.SortOrder = existingTextures.Last().SortOrder + 1;
-        
+        textureToDelete.SortOrder = await GetNextSortOrder();
         textureToDelete.UpdatedBy = "System";
         textureToDelete.UpdatedDateTime = DateTime.UtcNow;
 

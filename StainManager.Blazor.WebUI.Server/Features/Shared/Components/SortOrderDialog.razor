@@ -111,15 +111,8 @@
             return;
         }
         
-        Console.WriteLine($"DropzoneIdentifier: {dropZoneItem.DropzoneIdentifier}");
-        Console.WriteLine($"ItemZone: {dropZoneItem.Item.Zone}");
         dropZoneItem.Item.Zone = dropZoneItem.DropzoneIdentifier;
         
-        foreach (var item in _items)
-        {
-            Console.WriteLine($"Item: {item.Name}, Zone: {item.Zone}, SortOrder: {item.SortOrder}");
-        }
-
         _items.UpdateOrder(dropZoneItem, item => item.SortOrder, 0);
     }
 
