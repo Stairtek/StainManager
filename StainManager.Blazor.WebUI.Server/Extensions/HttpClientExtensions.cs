@@ -10,19 +10,31 @@ public static class HttpClientExtensions
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
 
-    private static async Task<Result<T>> HandleResponse<T>(HttpResponseMessage response)
+    private static async Task<Result<T>> HandleResponse<T>(
+        HttpResponseMessage response,
+        ILogger logger)
     {
+        var responseString = await response.Content.ReadAsStringAsync();
+        
         if (response.IsSuccessStatusCode)
         {
-            var result = await response.Content.ReadFromJsonAsync<Result<T>>(DefaultJsonOptions);
+            logger.LogInformation(responseString);
+            var result = JsonSerializer.Deserialize<Result<T>>(responseString, DefaultJsonOptions);
             return result ?? Result.Fail<T>("Failed to deserialize response");
         }
         
-        var test = await response.Content.ReadAsStringAsync();
-        var errorResult = await response.Content.ReadFromJsonAsync<Result<T>>(DefaultJsonOptions);
-        
+        var errorResult = JsonSerializer.Deserialize<Result<T>>(responseString, DefaultJsonOptions);
+
         if (errorResult is null || string.IsNullOrEmpty(errorResult.Error))
+        {
+            logger.LogError("Failed to deserialize error response");
             return Result.Fail<T>("Failed to get response");
+        }
+
+        if (errorResult.HandledError)
+            logger.LogWarning(responseString);
+        else
+            logger.LogError(responseString);
 
         return Result.Fail<T>(errorResult.Error, errorResult.HandledError);
     }
@@ -30,12 +42,13 @@ public static class HttpClientExtensions
     
     public static async Task<Result<T>> GetAsync<T>(
         this HttpClient httpClient, 
-        string requestUri)
+        string requestUri,
+        ILogger logger)
     {
         try
         {
             var response = await httpClient.GetAsync(requestUri);
-            return await HandleResponse<T>(response);
+            return await HandleResponse<T>(response, logger);
         }
         catch (Exception error)
         {
@@ -45,13 +58,14 @@ public static class HttpClientExtensions
     
     public static async Task<Result<T>> PostAsync<T>(
         this HttpClient httpClient, 
-        string requestUri, 
-        T value)
+        string requestUri,
+        T value,
+        ILogger logger)
     {
         try
         {
             var response = await httpClient.PostAsJsonAsync(requestUri, value);
-            return await HandleResponse<T>(response);
+            return await HandleResponse<T>(response, logger);
         }
         catch (Exception error)
         {
@@ -62,12 +76,13 @@ public static class HttpClientExtensions
     public static async Task<Result<T>> PutAsync<T>(
         this HttpClient httpClient, 
         string requestUri, 
-        T value)
+        T value,
+        ILogger logger)
     {
         try
         {
             var response = await httpClient.PutAsJsonAsync(requestUri, value);
-            return await HandleResponse<T>(response);
+            return await HandleResponse<T>(response, logger);
         }
         catch (Exception error)
         {
@@ -78,12 +93,13 @@ public static class HttpClientExtensions
     public static async Task<Result<bool>> PatchAsync<T>(
         this HttpClient httpClient, 
         string requestUri, 
-        T value)
+        T value,
+        ILogger logger)
     {
         try
         {
             var response = await httpClient.PatchAsJsonAsync(requestUri, value);
-            return await HandleResponse<bool>(response);
+            return await HandleResponse<bool>(response, logger);
         }
         catch (Exception error)
         {
@@ -93,12 +109,13 @@ public static class HttpClientExtensions
     
     public static async Task<Result<T>> DeleteAsync<T>(
         this HttpClient httpClient, 
-        string requestUri)
+        string requestUri,
+        ILogger logger)
     {
         try
         {
             var response = await httpClient.DeleteAsync(requestUri);
-            return await HandleResponse<T>(response);
+            return await HandleResponse<T>(response, logger);
         }
         catch (Exception error)
         {

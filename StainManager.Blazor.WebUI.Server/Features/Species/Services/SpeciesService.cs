@@ -1,5 +1,3 @@
-using System.Text.Json;
-using Mapster;
 using MudBlazor;
 using StainManager.Blazor.WebUI.Server.Common.Helpers;
 using StainManager.Blazor.WebUI.Server.Common.Models;
@@ -31,7 +29,8 @@ public interface ISpeciesService
 }
 
 public class SpeciesService(
-    IHttpClientFactory httpClientFactory) 
+    IHttpClientFactory httpClientFactory,
+    ILogger<SpeciesService> logger) 
     : ISpeciesService
 {
     private readonly HttpClient _http = httpClientFactory.CreateClient("StainManagerAPI");
@@ -40,7 +39,9 @@ public class SpeciesService(
     public async Task<List<SpeciesModel>?> GetSpeciesAsync(
         bool showDeleted = false)
     {
-        return await _http.GetAsync<List<SpeciesModel>>($"{_baseUrl}?isActive={!showDeleted}");
+        return await _http.GetAsync<List<SpeciesModel>>(
+            $"{_baseUrl}?isActive={!showDeleted}", 
+            logger);
     }
 
     public async Task<Result<PaginatedList<SpeciesManagementModel>?>> GetSpeciesManagementAsync(
@@ -59,31 +60,35 @@ public class SpeciesService(
             sortDefinition,
             filterDefinitions);
         
-        return await _http.GetAsync<PaginatedList<SpeciesManagementModel>?>($"{_baseUrl}/management?{query}");
+        return await _http.GetAsync<PaginatedList<SpeciesManagementModel>?>(
+            $"{_baseUrl}/management?{query}", 
+            logger);
     }
 
     public async Task<Result<SpeciesModel>> GetSpeciesByIdAsync(int id)
     {
-        return await _http.GetAsync<SpeciesModel>($"{_baseUrl}/{id}");
+        return await _http.GetAsync<SpeciesModel>(
+            $"{_baseUrl}/{id}", 
+            logger);
     }
 
     public async Task<Result<SpeciesModel>?> CreateSpeciesAsync(SpeciesModel species)
     {
-        return await _http.PostAsync($"{_baseUrl}", species);
+        return await _http.PostAsync($"{_baseUrl}", species, logger);
     }
 
     public async Task<Result<SpeciesModel>?> UpdateSpeciesAsync(SpeciesModel species)
     {
-        return await _http.PutAsync($"{_baseUrl}/{species.Id}", species);
+        return await _http.PutAsync($"{_baseUrl}/{species.Id}", species, logger);
     }
 
     public async Task<Result<bool>?> DeleteSpeciesAsync(int id)
     {
-        return await _http.DeleteAsync<bool>($"{_baseUrl}/{id}");
+        return await _http.DeleteAsync<bool>($"{_baseUrl}/{id}", logger);
     }
 
     public async Task<Result<bool>?> RestoreSpeciesAsync(int id)
     {
-        return await _http.PutAsync($"{_baseUrl}/{id}/restore", false);
+        return await _http.PatchAsync($"{_baseUrl}/{id}/restore", false, logger);
     }
 }

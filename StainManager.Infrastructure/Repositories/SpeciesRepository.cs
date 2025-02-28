@@ -127,8 +127,6 @@ public class SpeciesRepository(
         speciesToRestore.UpdatedBy = "System";
         speciesToRestore.UpdatedDateTime = DateTime.Now;
 
-        await context.SaveChangesAsync();
-
         return await context.SaveChangesAsync() > 0;
     }
 }

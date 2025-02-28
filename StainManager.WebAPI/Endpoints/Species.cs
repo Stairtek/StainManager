@@ -18,7 +18,7 @@ public class Species : EndpointGroupBase
             .MapGet(GetSpeciesById, "{id}")
             .MapPost(CreateSpecies)
             .MapPut(UpdateSpecies, "{id}")
-            .MapPut(RestoreSpecies, "{id}/restore")
+            .MapPatch(RestoreSpecies, "{id}/restore")
             .MapDelete(DeleteSpecies, "{id}");
     }
 
@@ -111,7 +111,7 @@ public class Species : EndpointGroupBase
 
         return result.Failure
             ? Results.BadRequest(result)
-            : Results.Ok();
+            : Results.Ok(result);
     }
 
     public async Task<IResult> RestoreSpecies(
@@ -123,6 +123,6 @@ public class Species : EndpointGroupBase
 
         return result.Failure
             ? Results.BadRequest(result)
-            : Results.Ok();
+            : Results.Ok(result);
     }
 }

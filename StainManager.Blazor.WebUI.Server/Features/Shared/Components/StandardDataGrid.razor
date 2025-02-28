@@ -1,0 +1,183 @@
+@using StainManager.Blazor.WebUI.Server.Common.Models
+@typeparam TItem
+
+<MudDataGrid
+    @ref="_dataGrid"
+    T="TItem"
+    ServerData="LoadGridData"
+    Hover="true"
+    Striped="true"
+    ColumnResizeMode="ResizeMode.Column"
+    Filterable="true"
+    FilterMode="DataGridFilterMode.Simple"
+    Elevation="3">
+    <ToolBarContent>
+        <MudGrid>
+            <MudItem xs="4">
+                <MudPaper
+                    Class="d-flex align-center"
+                    Style="height: 48px"
+                    Elevation="0">
+                    <MudText Typo="Typo.h6">@Settings.Title</MudText>
+
+                    @if (Settings.DisplaySearch)
+                    {
+                        <MudTextField
+                            T="string"
+                            Value="@_searchQuery"
+                            ValueChanged="OnSearch"
+                            Immediate="true"
+                            Placeholder="Search"
+                            Adornment="Adornment.Start"
+                            AdornmentIcon="@Icons.Material.Filled.Search"
+                            IconSize="Size.Medium"
+                            Class="ml-5"/>
+                    }
+                </MudPaper>
+            </MudItem>
+            
+            <MudItem xs="6"/>
+            
+            <MudItem xs="2">
+                <MudPaper
+                    Elevation="0"
+                    Class="d-flex justify-end align-center">
+                    @if (Settings.DisplayShowDeletedButton)
+                    {
+                        <MudTooltip Text="@(_showDeleted ? "Hide Deleted" : "Show Deleted")">
+                            <MudIconButton
+                                Icon="@(_showDeleted ? Icons.Material.Filled.RemoveRedEye : Icons.Material.Outlined.RemoveRedEye)"
+                                Color="@(_showDeleted ? Color.Error : Color.Default)"
+                                OnClick="OnToggleShowDeleted"/>
+                        </MudTooltip>
+                    }
+
+                    @if (Settings.DisplayRefreshButtons)
+                    {
+                        <MudTooltip Text="Reset">
+                            <MudIconButton
+                                Icon="@Icons.Material.Filled.Loop"
+                                Color="Color.Default"
+                                OnClick="OnReset"/>
+                        </MudTooltip>
+
+                        <MudTooltip Text="Refresh">
+                            <MudIconButton
+                                Icon="@Icons.Material.Filled.Refresh"
+                                Color="Color.Default"
+                                OnClick="OnRefresh"/>
+                        </MudTooltip>
+                    }
+
+                    @if (@AdditionalActions != null)
+                    {
+                        @AdditionalActions
+                    }
+                    
+                    @if (Settings.DisplayAddButton)
+                    {
+                        <MudTooltip Text="@($"Add New {Settings.ObjectName}")">
+                            <MudIconButton
+                                Icon="@Icons.Material.Filled.AddCircle"
+                                Color="Color.Default"
+                                OnClick="() => OpenDialog.InvokeAsync(null)"/>
+                        </MudTooltip>
+                    }
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+    </ToolBarContent>
+
+    <NoRecordsContent>
+        <MudText Typo="Typo.h6">No @(Settings.Title) Found</MudText>
+    </NoRecordsContent>
+
+    <Columns>
+        @GridColumns
+    </Columns>
+
+    <PagerContent>
+        <MudDataGridPager T="TItem"/>
+    </PagerContent>
+</MudDataGrid>
+
+@code {
+
+    [Parameter]
+    public StandardDataGridSettings Settings { get; set; } = null!;
+    
+    [Parameter]
+    public RenderFragment? AdditionalActions { get; set; }
+    
+    [Parameter]
+    public RenderFragment GridColumns { get; set; } = null!;
+    
+    [Parameter]
+    public Func<GridState<TItem>, string, bool, Task<Result<PaginatedList<TItem>?>>> LoadData { get; set; } = null!;
+    
+    [Parameter]
+    public EventCallback<int?> OpenDialog { get; set; }
+    
+    [Parameter]
+    public EventCallback<bool> ShowDeletedChanged { get; set; }
+    
+    
+    private MudDataGrid<TItem> _dataGrid = null!;
+    private string _searchQuery = string.Empty;
+    private bool _showDeleted;
+    
+    
+    private async Task<GridData<TItem>> LoadGridData(GridState<TItem> state)
+    {
+        var result = await LoadData(state, _searchQuery, _showDeleted);
+    
+        if (result.Failure)
+        {
+            Snackbar.Add(result.GetErrorMessage($"Failed to load {Settings.Title}"), Severity.Error);
+            return new GridData<TItem>();
+        }
+        
+        return new GridData<TItem>
+        {
+            TotalItems = result.Value?.TotalCount ?? 0,
+            Items = result.Value?.Items ?? []
+        };
+    }
+    
+    <!--#region Toolbar Actions-->
+    private Task OnSearch(string searchText)
+    {
+        _searchQuery = searchText;
+        _dataGrid.ReloadServerData();
+        return Task.CompletedTask;
+    }
+    
+    private Task OnReset()
+    {
+        _searchQuery = string.Empty;
+        _showDeleted = false;
+        _dataGrid.ClearFiltersAsync();
+        _dataGrid.ReloadServerData();
+
+        return Task.CompletedTask;
+    }
+    
+    private Task OnRefresh()
+    {
+        _dataGrid.ReloadServerData();
+        return Task.CompletedTask;
+    }
+    
+    private async Task OnToggleShowDeleted()
+    {
+        _showDeleted = !_showDeleted;
+        await _dataGrid.ReloadServerData();
+        await ShowDeletedChanged.InvokeAsync(_showDeleted);
+    }
+    <!--#endregion Toolbar Actions-->
+    
+    public async Task ReloadData()
+    {
+        await _dataGrid.ReloadServerData();
+    }
+}

@@ -20,8 +20,8 @@ public class RestoreSpeciesCommandHandler(
         var result = await speciesRepository
             .RestoreSpeciesAsync(request.Id);
 
-        return !result
-            ? Result.Fail<object>("Failed to restore species", true)
-            : Result.Ok();
+        return result
+            ? Result.Ok()
+            : Result.Fail<object>("Failed to restore species", true);
     }
 }

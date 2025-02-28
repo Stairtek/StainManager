@@ -1,87 +1,22 @@
 @page "/species"
 
+@using StainManager.Blazor.WebUI.Server.Common.Models
 @using StainManager.Blazor.WebUI.Server.Features.Species.Models
 @using StainManager.Blazor.WebUI.Server.Features.Species.Services
 
 @inject ISpeciesService SpeciesService
 
-<MudDataGrid
+<StandardDataGrid
     @ref="_dataGrid"
-    T="SpeciesManagementModel"
-    ServerData="LoadSpecies"
-    Hover="true"
-    Striped="true"
-    ColumnResizeMode="ResizeMode.Column"
-    Filterable="true"
-    FilterMode="DataGridFilterMode.Simple"
-    Elevation="3">
-    <ToolBarContent>
-        <MudGrid>
-            <!--#region Header & Search-->
-            <MudItem xs="4">
-                <MudPaper
-                    Class="d-flex align-center"
-                    Style="height: 48px"
-                    Elevation="0">
-
-                    <MudText Typo="Typo.h6">Species</MudText>
-
-                    <MudTextField
-                        T="string"
-                        Value="@_searchQuery"
-                        ValueChanged="OnSearch"
-                        Immediate="true"
-                        Placeholder="Search"
-                        Adornment="Adornment.Start"
-                        AdornmentIcon="@Icons.Material.Filled.Search"
-                        IconSize="Size.Medium"
-                        Class="ml-5"/>
-
-                </MudPaper>
-            </MudItem>
-            <!--#endregion Header & Search-->
-
-            <MudItem xs="6"/>
-
-            <!--#region Header Actions-->
-            <MudItem xs="2">
-                <MudPaper
-                    Elevation="0"
-                    Class="d-flex justify-end align-center">
-                    <MudTooltip Text="@(_showDeleted ? "Hide Deleted" : "Show Deleted")">
-                        <MudIconButton
-                            Icon="@(_showDeleted ? Icons.Material.Filled.RemoveRedEye : Icons.Material.Outlined.RemoveRedEye)"
-                            Color="@(_showDeleted ? Color.Error : Color.Default)"
-                            OnClick="OnToggleShowDeleted"/>
-                    </MudTooltip>
-
-                    <MudTooltip Text="Reset">
-                        <MudIconButton Icon="@Icons.Material.Filled.Loop" Color="Color.Default" OnClick="OnReset"/>
-                    </MudTooltip>
-
-                    <MudTooltip Text="Refresh">
-                        <MudIconButton Icon="@Icons.Material.Filled.Refresh" Color="Color.Default" OnClick="OnRefresh"/>
-                    </MudTooltip>
-
-                    <MudTooltip Text="Add New Species">
-                        <MudIconButton
-                            Icon="@Icons.Material.Filled.AddCircle"
-                            Color="Color.Default"
-                            OnClick="() => OpenSpeciesDialog()"/>
-                    </MudTooltip>
-                </MudPaper>
-            </MudItem>
-            <!--#endregion Header Actions-->
-        </MudGrid>
-    </ToolBarContent>
-
-    <NoRecordsContent>
-        <MudText Typo="Typo.h6">No Species Found</MudText>
-    </NoRecordsContent>
-
-    <Columns>
+    TItem="SpeciesManagementModel"
+    LoadData="LoadSpecies"
+    Settings="@(new StandardDataGridSettings("Species", "Species"))"
+    OpenDialog="OpenSpeciesDialog"
+    ShowDeletedChanged="OnShowDeletedChanged">
+    <GridColumns>
         <!--#region Edit-->
         <TemplateColumn
+            T="SpeciesManagementModel"
             Title="Edit"
             CellStyle="width: 75px"
             Filterable="false">
@@ -102,6 +37,7 @@
 
         <!--#region Thumbnail-->
         <TemplateColumn
+            T="SpeciesManagementModel"
             Title="Thumbnail"
             CellStyle="width: 50px"
             Filterable="false">
@@ -121,15 +57,20 @@
         <!--#endregion Thumbnail-->
 
         <PropertyColumn
-            Property="c => c.Name"
+            T="SpeciesManagementModel"
+            TProperty="string"
+            Property="c => c.Name!"
             Filterable="true"/>
 
         <PropertyColumn
-            Property="c => c.Abbreviation"
+            T="SpeciesManagementModel"
+            TProperty="string"
+            Property="c => c.Abbreviation!"
             Filterable="true"/>
 
         <!--#region Production-->
         <TemplateColumn
+            T="SpeciesManagementModel"
             Title="Production"
             Filterable="false">
             <CellTemplate>
@@ -145,6 +86,7 @@
 
         <!--#region Delete/Restore-->
         <TemplateColumn
+            T="SpeciesManagementModel"
             Title="Delete"
             CellStyle="width: 75px"
             Filterable="false">
@@ -165,75 +107,32 @@
             </CellTemplate>
         </TemplateColumn>
         <!--#endregion Delete/Restore-->
-    </Columns>
-
-    <PagerContent>
-        <MudDataGridPager T="SpeciesManagementModel"/>
-    </PagerContent>
-</MudDataGrid>
+    </GridColumns>
+</StandardDataGrid>
 
 @code {
-    MudDataGrid<SpeciesManagementModel> _dataGrid = null!;
+    private StandardDataGrid<SpeciesManagementModel> _dataGrid = null!;
     private bool _showDeleted;
-    private string _searchQuery = string.Empty;
 
-    private async Task<GridData<SpeciesManagementModel>> LoadSpecies(
-        GridState<SpeciesManagementModel> state)
+    private async Task<Result<PaginatedList<SpeciesManagementModel>?>> LoadSpecies(
+        GridState<SpeciesManagementModel> state,
+        string searchQuery,
+        bool showDeleted)
     {
-        var speciesManagement = await SpeciesService.GetSpeciesManagementAsync(
-            _searchQuery,
+        return await SpeciesService.GetSpeciesManagementAsync(
+            searchQuery,
             state.Page + 1, // 0-based index
             state.PageSize,
-            _showDeleted,
+            showDeleted,
             state.SortDefinitions.FirstOrDefault(),
             state.FilterDefinitions);
-
-        if (speciesManagement.Failure)
-        {
-            Snackbar.Add(speciesManagement.GetErrorMessage("Failed to load species"), Severity.Error);
-            return new GridData<SpeciesManagementModel>();
-        }
-
-        return new GridData<SpeciesManagementModel>
-        {
-            TotalItems = speciesManagement.Value?.TotalCount ?? 0,
-            Items = speciesManagement.Value?.Items ?? []
-        };
     }
-
-    <!--#region Toolbar Actions-->
-    private Task OnSearch(string searchText)
+    
+    private void OnShowDeletedChanged(bool showDeleted)
     {
-        _searchQuery = searchText;
-        _dataGrid.ReloadServerData();
-        return Task.CompletedTask;
+        _showDeleted = showDeleted;
     }
 
-    private Task OnReset()
-    {
-        _searchQuery = string.Empty;
-        _showDeleted = false;
-        _dataGrid.ClearFiltersAsync();
-        _dataGrid.ReloadServerData();
-
-        return Task.CompletedTask;
-    }
-
-    private Task OnRefresh()
-    {
-        _dataGrid.ReloadServerData();
-        return Task.CompletedTask;
-    }
-
-    private Task OnToggleShowDeleted()
-    {
-        _showDeleted = !_showDeleted;
-        _dataGrid.ReloadServerData();
-        return Task.CompletedTask;
-    }
-    <!--#endregion Toolbar Actions-->
-
-    <!--#region Row Actions-->
     private async Task OpenSpeciesDialog(int? id = null)
     {
         var parameters = new DialogParameters<SpeciesDialog>
@@ -257,7 +156,7 @@
         var result = await dialog.Result;
 
         if (result is { Canceled: false })
-            await _dataGrid.ReloadServerData();
+            await _dataGrid.ReloadData();
     }
 
     private async Task OpenDeleteSpeciesDialog(int speciesId)
@@ -277,7 +176,7 @@
         var result = await dialog.Result;
 
         if (result is { Canceled: false })
-            await _dataGrid.ReloadServerData();
+            await _dataGrid.ReloadData();
     }
 
     private async Task RestoreSpecies(int speciesId)
@@ -289,8 +188,7 @@
             Snackbar.Add(result.GetErrorMessage("Failed to restore species"), Severity.Error);
             return;
         }
-
-        await _dataGrid.ReloadServerData();
+        
+        await _dataGrid.ReloadData();
     }
-    <!--#endregion Row Actions-->
 }

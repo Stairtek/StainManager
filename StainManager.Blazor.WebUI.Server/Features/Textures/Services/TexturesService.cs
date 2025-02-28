@@ -37,7 +37,8 @@ public interface ITexturesService : IWebAPIService
 
 
 public class TexturesService(
-    IHttpClientFactory httpClientFactory)
+    IHttpClientFactory httpClientFactory,
+    ILogger<TexturesService> logger)
     : ITexturesService
 {
     private readonly HttpClient _http = httpClientFactory.CreateClient("StainManagerAPI");
@@ -45,12 +46,16 @@ public class TexturesService(
     
     public async Task<List<TextureModel>?> GetTexturesAsync(bool showDeleted = false)
     {
-        return await _http.GetAsync<List<TextureModel>>($"{_baseUrl}?isActive={!showDeleted}");
+        return await _http.GetAsync<List<TextureModel>>(
+            $"{_baseUrl}?isActive={!showDeleted}", 
+            logger);
     }
     
     public async Task<Result<List<TextureSummaryModel>?>> GetTexturesSummaryAsync()
     {
-        return await _http.GetAsync<List<TextureSummaryModel>?>($"{_baseUrl}/summary");
+        return await _http.GetAsync<List<TextureSummaryModel>?>(
+            $"{_baseUrl}/summary", 
+            logger);
     }
 
     public async Task<Result<PaginatedList<TextureManagementModel>?>> GetTexturesManagementAsync(
@@ -69,37 +74,39 @@ public class TexturesService(
             sortDefinition,
             filterDefinitions);
         
-        return await _http.GetAsync<PaginatedList<TextureManagementModel>?>($"{_baseUrl}/management?{query}");
+        return await _http.GetAsync<PaginatedList<TextureManagementModel>?>(
+            $"{_baseUrl}/management?{query}",
+            logger);
     }
 
     public async Task<Result<TextureModel>> GetTextureByIdAsync(int id)
     {
-        return await _http.GetAsync<TextureModel>($"{_baseUrl}/{id}");
+        return await _http.GetAsync<TextureModel>($"{_baseUrl}/{id}", logger);
     }
 
     public async Task<Result<TextureModel>?> CreateTextureAsync(TextureModel texture)
     {
-        return await _http.PostAsync($"{_baseUrl}", texture);
+        return await _http.PostAsync($"{_baseUrl}", texture, logger);
     }
 
     public async Task<Result<TextureModel>?> UpdateTextureAsync(TextureModel texture)
     {
-        return await _http.PutAsync($"{_baseUrl}/{texture.Id}", texture);
+        return await _http.PutAsync($"{_baseUrl}/{texture.Id}", texture, logger);
     }
     
     public async Task<Result<bool>?> UpdateTexturesSortOrderAsync(
         List<DropItem> textures)
     {
-        return await _http.PatchAsync($"{_baseUrl}/sortorder", textures);
+        return await _http.PatchAsync($"{_baseUrl}/sortorder", textures, logger);
     }
 
     public async Task<Result<bool>?> DeleteTextureAsync(int id)
     {
-        return await _http.DeleteAsync<bool>($"{_baseUrl}/{id}"); 
+        return await _http.DeleteAsync<bool>($"{_baseUrl}/{id}", logger); 
     }
 
     public async Task<Result<bool>?> RestoreTextureAsync(int id)
     {
-        return await _http.PutAsync($"{_baseUrl}/{id}/restore", false); 
+        return await _http.PutAsync($"{_baseUrl}/{id}/restore", false, logger); 
     }
 }
