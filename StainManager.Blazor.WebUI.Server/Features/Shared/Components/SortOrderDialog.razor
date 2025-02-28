@@ -1,0 +1,145 @@
+@using MudBlazor.Utilities
+@using StainManager.Blazor.WebUI.Server.Common.Models
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon
+                Icon="@Icons.Material.Filled.ImportExport"
+                Class="mr-3 mb-n1"/>
+            Update Sort Order
+        </MudText>
+    </TitleContent>
+    
+    <DialogContent>
+        <MudDropContainer
+            T="DropItem"
+            Items="@_items"
+            @ref="_container"
+            ItemDropped="ItemUpdated"
+            ItemsSelector="@((item, dropzone) => item.Zone == dropzone)"
+            Class="d-flex flex-wrap flex-grow-1">
+            <ChildContent>
+                <MudPaper 
+                    Class="flex-grow-1"
+                    Elevation="0">
+                    <MudList
+                        T="string"
+                        Class="d-flex flex-column mud-height-full">
+                        <MudDropZone
+                            T="DropItem"
+                            Identifier="1"
+                            Class="flex-grow-1"
+                            ItemDraggingClass="mud-info-text"
+                            AllowReorder="true"/>
+                    </MudList>
+                </MudPaper>
+            </ChildContent>
+            <ItemRenderer>
+                <div Class="rounded mud-paper-outlined d-flex align-center pa-3 ma-2">
+                    <MudIcon Icon="@Icons.Material.Filled.DragHandle" Color="Color.Inherit" Class="mr-2"/>
+                    @context.Name
+                </div>
+            </ItemRenderer>
+        </MudDropContainer>
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton
+            Color="Color.Primary"
+            Variant="Variant.Filled"
+            Disabled="!_itemsLoaded"
+            OnClick="@(async () => await Submit())">
+            Save
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+<MudOverlay Visible="_isLoading" DarkBackground="true" Absolute="true">
+    <MudProgressCircular Color="Color.Secondary" Indeterminate="true"/>
+</MudOverlay>
+
+@code {
+    
+    [CascadingParameter]
+    public required IMudDialogInstance MudDialog { get; set; }
+    
+    [Parameter]
+    public required Func<Task<Result<List<DropItem>?>>> GetDropItems { get; set; }
+    
+    [Parameter]
+    public required Func<List<DropItem>, Task<Result>> SaveSortOrder { get; set; }
+    
+    private MudDropContainer<DropItem> _container = null!;
+    private List<DropItem> _items = [];
+    private bool _isLoading;
+    private bool _itemsLoaded;
+
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await LoadDropItems();
+            StateHasChanged();
+            _container.Refresh();
+        }
+    }
+
+    private async Task LoadDropItems()
+    {
+        _isLoading = true;
+        var result = await GetDropItems();
+        _isLoading = false;
+        
+        if (result is { Failure: true} || result.Value is null)
+        {
+            Snackbar.Add(result.GetErrorMessage("Failed to load items"), Severity.Error);
+            return;
+        }
+        
+        _items = result.Value;
+        _itemsLoaded = true;
+    }
+
+    private void ItemUpdated(MudItemDropInfo<DropItem> dropZoneItem)
+    {
+        if (dropZoneItem.Item == null)
+        {
+            Snackbar.Add("Failed to update order", Severity.Error);
+            return;
+        }
+        
+        Console.WriteLine($"DropzoneIdentifier: {dropZoneItem.DropzoneIdentifier}");
+        Console.WriteLine($"ItemZone: {dropZoneItem.Item.Zone}");
+        dropZoneItem.Item.Zone = dropZoneItem.DropzoneIdentifier;
+        
+        foreach (var item in _items)
+        {
+            Console.WriteLine($"Item: {item.Name}, Zone: {item.Zone}, SortOrder: {item.SortOrder}");
+        }
+
+        _items.UpdateOrder(dropZoneItem, item => item.SortOrder, 0);
+    }
+
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task Submit()
+    {
+        _isLoading = true;
+        var result = await SaveSortOrder(_items);
+        _isLoading = false;
+        
+        if (result is { Failure: true })
+        {
+            Snackbar.Add(result.GetErrorMessage("Failed to save sort order"), Severity.Error);
+            return;
+        }
+        
+        Snackbar.Add("Sort order saved successfully", Severity.Success);
+        
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+}

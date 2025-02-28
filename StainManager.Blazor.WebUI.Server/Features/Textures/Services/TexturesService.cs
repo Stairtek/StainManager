@@ -11,6 +11,8 @@ public interface ITexturesService : IWebAPIService
 {
     Task<List<TextureModel>?> GetTexturesAsync(bool showDeleted = false);
     
+    Task<Result<List<TextureSummaryModel>?>> GetTexturesSummaryAsync();
+    
     Task<Result<PaginatedList<TextureManagementModel>?>> GetTexturesManagementAsync(
         string searchQuery,
         int pageNumber,
@@ -24,8 +26,11 @@ public interface ITexturesService : IWebAPIService
     Task<Result<TextureModel>?> CreateTextureAsync(TextureModel texture);
     
     Task<Result<TextureModel>?> UpdateTextureAsync(TextureModel texture);
+
+    Task<Result<bool>?> UpdateTexturesSortOrderAsync(
+        List<DropItem> textures);
     
-    Task<Result<bool?>> DeleteTextureAsync(int id);
+    Task<Result<bool>?> DeleteTextureAsync(int id);
     
     Task<Result<bool>?> RestoreTextureAsync(int id);
 }
@@ -41,6 +46,11 @@ public class TexturesService(
     public async Task<List<TextureModel>?> GetTexturesAsync(bool showDeleted = false)
     {
         return await _http.GetAsync<List<TextureModel>>($"{_baseUrl}?isActive={!showDeleted}");
+    }
+    
+    public async Task<Result<List<TextureSummaryModel>?>> GetTexturesSummaryAsync()
+    {
+        return await _http.GetAsync<List<TextureSummaryModel>?>($"{_baseUrl}/summary");
     }
 
     public async Task<Result<PaginatedList<TextureManagementModel>?>> GetTexturesManagementAsync(
@@ -76,10 +86,16 @@ public class TexturesService(
     {
         return await _http.PutAsync($"{_baseUrl}/{texture.Id}", texture);
     }
-
-    public async Task<Result<bool?>> DeleteTextureAsync(int id)
+    
+    public async Task<Result<bool>?> UpdateTexturesSortOrderAsync(
+        List<DropItem> textures)
     {
-        return await _http.DeleteAsync<bool?>($"{_baseUrl}/{id}"); 
+        return await _http.PatchAsync($"{_baseUrl}/sortorder", textures);
+    }
+
+    public async Task<Result<bool>?> DeleteTextureAsync(int id)
+    {
+        return await _http.DeleteAsync<bool>($"{_baseUrl}/{id}"); 
     }
 
     public async Task<Result<bool>?> RestoreTextureAsync(int id)

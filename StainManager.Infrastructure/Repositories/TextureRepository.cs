@@ -130,4 +130,22 @@ public class TextureRepository(
 
         return await context.SaveChangesAsync() > 0;    
     }
+    
+    public async Task<bool> UpdateTexturesSortOrderAsync(
+        List<SortOrderModel> textures)
+    {
+        var existingTextures = await GetAllTexturesAsync();
+        
+        foreach (var texture in textures)
+        {
+            var textureToUpdate = existingTextures
+                .FirstOrDefault(c => c.Id == texture.Id);
+
+            Guard.Against.NotFound(texture.Id, textureToUpdate);
+            
+            textureToUpdate.SortOrder = texture.SortOrder;
+        }
+
+        return await context.SaveChangesAsync() > 0;
+    }
 }

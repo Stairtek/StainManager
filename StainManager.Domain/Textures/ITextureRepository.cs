@@ -32,4 +32,7 @@ public interface ITextureRepository : IRepository
     Task<bool> DeleteTextureAsync(int id);
     
     Task<bool> RestoreTextureAsync(int id);
+
+    Task<bool> UpdateTexturesSortOrderAsync(
+        List<SortOrderModel> textures);
 }

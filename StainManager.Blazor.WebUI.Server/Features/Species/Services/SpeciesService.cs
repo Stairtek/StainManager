@@ -25,7 +25,7 @@ public interface ISpeciesService
 
     Task<Result<SpeciesModel>?> UpdateSpeciesAsync(SpeciesModel species);
 
-    Task<Result<bool?>> DeleteSpeciesAsync(int id);
+    Task<Result<bool>?> DeleteSpeciesAsync(int id);
 
     Task<Result<bool>?> RestoreSpeciesAsync(int id);
 }
@@ -77,9 +77,9 @@ public class SpeciesService(
         return await _http.PutAsync($"{_baseUrl}/{species.Id}", species);
     }
 
-    public async Task<Result<bool?>> DeleteSpeciesAsync(int id)
+    public async Task<Result<bool>?> DeleteSpeciesAsync(int id)
     {
-        return await _http.DeleteAsync<bool?>($"{_baseUrl}/{id}");
+        return await _http.DeleteAsync<bool>($"{_baseUrl}/{id}");
     }
 
     public async Task<Result<bool>?> RestoreSpeciesAsync(int id)

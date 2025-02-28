@@ -2,9 +2,11 @@ using StainManager.Application.Textures.Commands.CreateTexture;
 using StainManager.Application.Textures.Commands.DeleteTexture;
 using StainManager.Application.Textures.Commands.RestoreTexture;
 using StainManager.Application.Textures.Commands.UpdateTexture;
+using StainManager.Application.Textures.Commands.UpdateTexturesSortOrder;
 using StainManager.Application.Textures.Queries.GetTextureById;
 using StainManager.Application.Textures.Queries.GetTextures;
 using StainManager.Application.Textures.Queries.GetTexturesForManagement;
+using StainManager.Application.Textures.Queries.GetTexturesSummary;
 
 namespace StainManager.WebAPI.Endpoints;
 
@@ -15,11 +17,13 @@ public class Textures
     {
         app.MapGroup(this)
             .MapGet(GetTextures)
+            .MapGet(GetTexturesSummary, "summary")
             .MapGet(GetTexturesForManagement, "management")
             .MapGet(GetTextureById, "{id}")
             .MapPost(CreateTexture)
             .MapPut(UpdateTexture, "{id}")
             .MapPut(RestoreTexture, "{id}/restore")
+            .MapPatch(UpdateTexturesSortOrder, "sortorder")
             .MapDelete(DeleteTexture, "{id}");
     }
     
@@ -30,6 +34,17 @@ public class Textures
         var query = new GetTexturesQuery { IsActive = isActive };
         var result = await sender.Send(query);
 
+        return result.Failure
+            ? Results.BadRequest(result)
+            : Results.Ok(result);
+    }
+
+    public async Task<IResult> GetTexturesSummary(
+        ISender sender)
+    {
+        var query = new GetTexturesSummaryQuery();
+        var result = await sender.Send(query);
+        
         return result.Failure
             ? Results.BadRequest(result)
             : Results.Ok(result);
@@ -96,6 +111,21 @@ public class Textures
         if (id != command.Id)
             return Results.BadRequest();
         
+        var result = await sender.Send(command);
+
+        return result.Failure
+            ? Results.BadRequest(result)
+            : Results.Ok(result);
+    }
+    
+    public async Task<IResult> UpdateTexturesSortOrder(
+        ISender sender,
+        List<SortOrderModel> textures)
+    {
+        var command = new UpdateTexturesSortOrderCommand
+        {
+            Textures = textures
+        };
         var result = await sender.Send(command);
 
         return result.Failure

@@ -75,6 +75,22 @@ public static class HttpClientExtensions
         }
     }
     
+    public static async Task<Result<bool>> PatchAsync<T>(
+        this HttpClient httpClient, 
+        string requestUri, 
+        T value)
+    {
+        try
+        {
+            var response = await httpClient.PatchAsJsonAsync(requestUri, value);
+            return await HandleResponse<bool>(response);
+        }
+        catch (Exception error)
+        {
+            return Result.Fail<bool>(error.Message);
+        }
+    }
+    
     public static async Task<Result<T>> DeleteAsync<T>(
         this HttpClient httpClient, 
         string requestUri)

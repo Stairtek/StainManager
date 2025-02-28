@@ -1,6 +1,6 @@
 @page "/textures"
 
-@using StainManager.Blazor.WebUI.Server.Features.Species.Components
+@using StainManager.Blazor.WebUI.Server.Common.Models
 @using StainManager.Blazor.WebUI.Server.Features.Textures.Models
 @using StainManager.Blazor.WebUI.Server.Features.Textures.Services
 
@@ -56,11 +56,24 @@
                     </MudTooltip>
 
                     <MudTooltip Text="Reset">
-                        <MudIconButton Icon="@Icons.Material.Filled.Loop" Color="Color.Default" OnClick="OnReset"/>
+                        <MudIconButton 
+                            Icon="@Icons.Material.Filled.Loop" 
+                            Color="Color.Default" 
+                            OnClick="OnReset"/>
                     </MudTooltip>
 
                     <MudTooltip Text="Refresh">
-                        <MudIconButton Icon="@Icons.Material.Filled.Refresh" Color="Color.Default" OnClick="OnRefresh"/>
+                        <MudIconButton 
+                            Icon="@Icons.Material.Filled.Refresh" 
+                            Color="Color.Default" 
+                            OnClick="OnRefresh"/>
+                    </MudTooltip>
+                    
+                    <MudTooltip Text="Change Sort">
+                        <MudIconButton 
+                            Icon="@Icons.Material.Filled.ImportExport" 
+                            Color="Color.Default" 
+                            OnClick="OnChangeSort"/>
                     </MudTooltip>
 
                     <MudTooltip Text="Add New Species">
@@ -99,6 +112,7 @@
             </CellTemplate>
         </TemplateColumn>
         <!--#endregion Edit-->
+        
 
         <!--#region Thumbnail-->
         <TemplateColumn
@@ -123,6 +137,15 @@
         <PropertyColumn
             Property="c => c.Name"
             Filterable="true"/>
+        
+        <!--#region Sort Order-->
+        <PropertyColumn
+            Property="c => c.SortOrder"
+            Filterable="false"
+            Sortable="true"
+            CellStyle="width: 165px;"
+            Title="Sort Order"/>
+        <!--#endregion Sort Order-->
 
         <!--#region Delete/Restore-->
         <TemplateColumn
@@ -212,12 +235,67 @@
         _dataGrid.ReloadServerData();
         return Task.CompletedTask;
     }
+    
+    <!--#region Change Sort Order-->
+    private async Task OnChangeSort()
+    {
+        var parameters = new DialogParameters<SortOrderDialog>
+        {
+            { c => c.GetDropItems, LoadTexturesForSortOrder },
+            { c => c.SaveSortOrder, SaveSortOrder }
+        };
+        var options = new DialogOptions
+        {
+            Position = DialogPosition.TopCenter,
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true,
+            CloseButton = true
+        };
+        var dialog = await DialogService.ShowAsync<SortOrderDialog>(
+            "Change Sort Order",
+            parameters,
+            options);
+        
+        var result = await dialog.Result;
+        
+        if (result is { Canceled: false })
+            await _dataGrid.ReloadServerData();
+    }
+
+    private async Task<Result<List<DropItem>?>> LoadTexturesForSortOrder()
+    {
+        var result = await TexturesService.GetTexturesSummaryAsync();
+        
+        if (result is { Failure: true } || result.Value is null)
+            return Result.Fail<List<DropItem>?>(result.GetErrorMessage("Failed to load textures"));
+        
+        var dropItems = result.Value?
+            .Select(x => new DropItem
+            {
+                Id = x.Id,
+                Name = x.Name,
+                SortOrder = x.SortOrder
+            })
+            .ToList();
+        
+        return Result.Ok(dropItems);
+    }
+    
+    private async Task<Result> SaveSortOrder(List<DropItem> dropItems)
+    {
+        var result = await TexturesService.UpdateTexturesSortOrderAsync(dropItems);
+        
+        return result is { Failure: true } 
+            ? Result.Fail(result.GetErrorMessage("Failed to load textures")) 
+            : Result.Ok();
+    }
+    <!--#endregion Change Sort Order-->
     <!--#endregion Toolbar Actions-->
 
     <!--#region Row Actions-->
     private async Task OpenTextureDialog(int? id = null)
     {
-        var parameters = new DialogParameters<SpeciesDialog>
+        var parameters = new DialogParameters<TextureDialog>
         {
             { c => c.Id, id }
         };
@@ -277,4 +355,5 @@
         await _dataGrid.ReloadServerData();
     }
     <!--#endregion Row Actions-->
+
 }
