@@ -3,9 +3,9 @@ version: 0.2
 phases:
   install:
     runtime-versions:
-      dotnet: 9.0
+      dotnet: 8.0
     commands:
-      - echo Installing .NET Core...
+      - echo Installing .NET ...
       - dotnet --version
 
   pre_build:
