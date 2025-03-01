@@ -3,7 +3,7 @@ version: 0.2
 phases:
   install:
     runtime-versions:
-      dotnet: 8.0
+      dotnet: 9.0
     commands:
       - echo Installing .NET ...
       - dotnet --version
@@ -11,7 +11,7 @@ phases:
   pre_build:
     commands:
       - echo Restoring dependencies...
-      - cd API
+      - cd API\StainManager.WebAPI
       - dotnet restore
 
   build:
