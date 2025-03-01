@@ -8,8 +8,7 @@ phases:
   pre_build:
     commands:
       - echo Restoring dependencies...
-      - cd API/StainManager.WebAPI
-      - dotnet restore --ucr
+      - dotnet restore ./API/StainManager.WebAPI/StainManager.WebAPI.csproj
 
   build:
     commands:
