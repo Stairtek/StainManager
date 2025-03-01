@@ -9,7 +9,7 @@ phases:
   pre_build:
     commands:
       - echo Restoring dependencies...
-      - cd API\StainManager.WebAPI
+      - cd API/StainManager.WebAPI
       - dotnet restore
 
   build:
