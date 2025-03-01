@@ -1,0 +1,35 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      dotnet: 9.0
+    commands:
+      - echo Installing .NET Core...
+      - dotnet --version
+
+  pre_build:
+    commands:
+      - echo Restoring dependencies...
+      - cd API
+      - dotnet restore
+
+  build:
+    commands:
+      - echo Building the project...
+      - dotnet build --configuration Release
+
+  post_build:
+    commands:
+      - echo Running tests...
+      - dotnet test --no-build --verbosity normal
+
+artifacts:
+  files:
+    - '**/*'
+  discard-paths: yes
+  base-directory: 'API/bin/Release/net9.0'
+
+cache:
+  paths:
+    - '/root/.nuget/packages/**/*'
