@@ -9,7 +9,7 @@ phases:
     commands:
       - echo Restoring dependencies...
       - cd API/StainManager.WebAPI
-      - dotnet restore
+      - dotnet restore --ucr
 
   build:
     commands:
