@@ -102,6 +102,8 @@ public class TextureRepository(
         textureToUpdate.UpdatedBy = "System";
         textureToUpdate.UpdatedDateTime = DateTime.UtcNow;
         textureToUpdate.Name = texture.Name;
+        textureToUpdate.FullImageLocation = texture.FullImageLocation;
+        textureToUpdate.ThumbnailImageLocation = texture.ThumbnailImageLocation;
 
         await context.SaveChangesAsync();
         
