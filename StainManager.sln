@@ -1,18 +1,18 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StainManager.Domain", "StainManager.Domain\StainManager.Domain.csproj", "{F7CD8F2B-3560-4C83-A233-F29FE70F99F6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StainManager.Domain", "API\StainManager.Domain\StainManager.Domain.csproj", "{F7CD8F2B-3560-4C83-A233-F29FE70F99F6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StainManager.Application", "StainManager.Application\StainManager.Application.csproj", "{26671743-18A6-4F59-B0F2-BD519D7D4D60}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StainManager.Application", "API\StainManager.Application\StainManager.Application.csproj", "{26671743-18A6-4F59-B0F2-BD519D7D4D60}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StainManager.Infrastructure", "StainManager.Infrastructure\StainManager.Infrastructure.csproj", "{767C588E-270A-4C70-83AC-1ACF98B02B31}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StainManager.Infrastructure", "API\StainManager.Infrastructure\StainManager.Infrastructure.csproj", "{767C588E-270A-4C70-83AC-1ACF98B02B31}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "API", "API", "{1CAB8894-EF5E-4C6D-B90F-68F69AD61C06}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StainManager.WebAPI", "StainManager.WebAPI\StainManager.WebAPI.csproj", "{1DF1D253-2939-46E7-8998-FB51C6B75C9C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StainManager.WebAPI", "API\StainManager.WebAPI\StainManager.WebAPI.csproj", "{1DF1D253-2939-46E7-8998-FB51C6B75C9C}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Client", "Client", "{67AA26B3-286D-4F9D-8190-B6131F0E27B4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StainManager.Blazor.WebUI.Server", "StainManager.Blazor.WebUI.Server\StainManager.Blazor.WebUI.Server.csproj", "{83B9BE45-1ADE-4780-85A7-0FBAED3790EB}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StainManager.Blazor.WebUI.Server", "Client\StainManager.Blazor.WebUI.Server\StainManager.Blazor.WebUI.Server.csproj", "{83B9BE45-1ADE-4780-85A7-0FBAED3790EB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
