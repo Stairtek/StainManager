@@ -3,8 +3,9 @@ version: 0.2
 phases:
   install:
     commands:
+      - curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel 9.0
       - dotnet --version
-      - dotnet --list-runtimes
+      - dotnet --list-sdks
 
   pre_build:
     commands:
