@@ -5,8 +5,15 @@ phases:
     runtime-versions:
       dotnet: 9.0
     commands:
-      # Install any dependencies needed
-      - echo Installing dependencies...
+      - echo Installing .NET 9.0...
+      # Download the dotnet-install script
+      - wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh
+      - chmod +x dotnet-install.sh
+      # Install .NET 9.0s
+      - ./dotnet-install.sh --version 9.0.100 --install-dir /usr/share/dotnet
+      # Add dotnet to PATH
+      - export PATH="/usr/share/dotnet:$PATH"
+      - dotnet --info
   
   pre_build:
     commands:
