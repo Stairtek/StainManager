@@ -1,56 +1,162 @@
 version: 0.2
 
+env:
+  variables:
+    ASPNETCORE_ENVIRONMENT: "Development"
+  # Use Secrets Manager to access the connection string
+  secrets-manager:
+    CONNECTION_STRING: "StainManager/Dev/ConnectionString:ConnectionString"
+
 phases:
   install:
     commands:
       - echo Installing .NET 9.0.200...
-      # Download the dotnet-install script
       - wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh
       - chmod +x dotnet-install.sh
-      # Install .NET 9.0.200
       - ./dotnet-install.sh --version 9.0.200 --install-dir /usr/share/dotnet
-      # Add dotnet to PATH
       - export PATH="/usr/share/dotnet:$PATH"
       - dotnet --info
+      - dotnet tool install --global dotnet-ef
+      - export PATH="$HOME/.dotnet/tools:$PATH"
+      - dotnet ef --version
   
   pre_build:
     commands:
-      # Navigate to the API directory
       - cd API
-      # Restore NuGet packages for the WebAPI project
       - echo Restoring NuGet packages...
       - dotnet restore StainManager.WebAPI/StainManager.WebAPI.csproj
-      
-      # Run tests if you have them (adjust the path as needed)
-      # - echo Running tests...
-      # - dotnet test StainManager.Tests/StainManager.Tests.csproj --no-restore
   
   build:
     commands:
-      # Build only the WebAPI project (which will build dependencies)
       - echo Building the WebAPI application...
       - dotnet build StainManager.WebAPI/StainManager.WebAPI.csproj --configuration Release --no-restore
       
-      # Publish only the WebAPI project
+      # Generate migration scripts but don't apply them
+      - echo Generating EF Core migration scripts...
+      - dotnet ef migrations script --idempotent --output ../db-migrations.sql --project StainManager.Infrastructure/StainManager.Infrastructure.csproj --startup-project StainManager.WebAPI/StainManager.WebAPI.csproj
+
       - echo Publishing the WebAPI application...
       - dotnet publish StainManager.WebAPI/StainManager.WebAPI.csproj --configuration Release --no-build --output ../publish
 
   post_build:
     commands:
-      # Any post build steps
       - echo Build completed on `date`
-      # Create deployment artifacts zip from the publish directory
+      # Copy migration script to publish directory
+      - cp ../db-migrations.sql ../publish/
+      
+      # Create deployment scripts directory
+      - mkdir -p ../scripts
+      
+      # Create database migration script with secrets handling
+      - |
+        cat > ../scripts/apply_migrations.sh << 'EOL'
+        #!/bin/bash
+        echo "Applying database migrations..."
+        
+        # Get connection string from secrets manager
+        CONNECTION_STRING=$(aws secretsmanager get-secret-value --secret-id StainManager/Dev/ConnectionString --query SecretString --output text | jq -r '.ConnectionString')
+        
+        cd $DEPLOYMENT_ROOT
+        export ASPNETCORE_ENVIRONMENT=Development
+        # Set the connection string as an environment variable
+        export ConnectionStrings__DefaultConnection="$CONNECTION_STRING"
+        
+        # Apply migrations using EF Core
+        dotnet ef database update --project $DEPLOYMENT_ROOT/StainManager.Infrastructure.dll --startup-project $DEPLOYMENT_ROOT/StainManager.WebAPI.dll
+        EOL
+      - chmod +x ../scripts/apply_migrations.sh
+      
+      # Create application start script with secrets handling
+      - |
+        cat > ../scripts/start_application.sh << 'EOL'
+        #!/bin/bash
+        cd $DEPLOYMENT_ROOT
+        
+        # Get connection string from secrets manager
+        CONNECTION_STRING=$(aws secretsmanager get-secret-value --secret-id StainManager/Dev/ConnectionString --query SecretString --output text | jq -r '.ConnectionString')
+        
+        # Start application with environment variables
+        export ASPNETCORE_ENVIRONMENT=Development
+        export ConnectionStrings__DefaultConnection="$CONNECTION_STRING"
+        
+        # For dev environments
+        nohup dotnet StainManager.WebAPI.dll > /var/log/stainmanager.log 2>&1 &
+        echo $! > /var/run/stainmanager.pid
+        EOL
+      - chmod +x ../scripts/start_application.sh
+      
+      # Create AWS CodeDeploy appspec
+      - |
+        cat > ../appspec.yml << 'EOL'
+        version: 0.0
+        os: linux
+        files:
+          - source: /
+            destination: /var/www/stainmanager-dev
+        hooks:
+          BeforeInstall:
+            - location: scripts/before_install.sh
+              timeout: 300
+              runas: root
+          AfterInstall:
+            - location: scripts/after_install.sh
+              timeout: 300
+              runas: root
+          ApplicationStart:
+            - location: scripts/start_application.sh
+              timeout: 300
+              runas: root
+        EOL
+      
+      # Additional deployment scripts
+      - |
+        cat > ../scripts/before_install.sh << 'EOL'
+        #!/bin/bash
+        # Stop any existing application
+        if [ -f /var/run/stainmanager.pid ]; then
+          kill $(cat /var/run/stainmanager.pid) || true
+          rm /var/run/stainmanager.pid
+        fi
+        mkdir -p /var/www/stainmanager-dev
+        # Define deployment root for scripts to use
+        export DEPLOYMENT_ROOT=/var/www/stainmanager-dev
+        
+        # Install required tools if not present
+        if ! command -v jq &> /dev/null; then
+          apt-get update && apt-get install -y jq
+        fi
+        
+        if ! command -v aws &> /dev/null; then
+          apt-get update && apt-get install -y awscli
+        fi
+        EOL
+      - chmod +x ../scripts/before_install.sh
+
+      - |
+        cat > ../scripts/after_install.sh << 'EOL'
+        #!/bin/bash
+        export DEPLOYMENT_ROOT=/var/www/stainmanager-dev
+        chmod +x $DEPLOYMENT_ROOT/scripts/*.sh
+        
+        # Apply migrations as a separate step
+        $DEPLOYMENT_ROOT/scripts/apply_migrations.sh
+        EOL
+      - chmod +x ../scripts/after_install.sh
+      
+      # Package everything
       - cd ../publish && zip -r ../deploy_package.zip *
-      # Clean up
-      - cd .. && rm -rf ./publish
+      - cp ../db-migrations.sql ./
+      - cd ..
+      - cp -r scripts ./
+      - cp appspec.yml ./
+      - zip -r deployment.zip deploy_package.zip appspec.yml scripts/ db-migrations.sql
 
 artifacts:
   files:
-    - deploy_package.zip
-    - appspec.yml
-    - scripts/**/*
+    - deployment.zip
   discard-paths: no
 
 cache:
   paths:
     - '/root/.nuget/packages/**/*'
+    - '/root/.dotnet/tools/**/*'
