@@ -5,7 +5,9 @@ phases:
     commands:
       - curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel 9.0
       - dotnet --version
-      - dotnet --list-sdks
+      - echo Installing dotnet-ef tool...
+      - dotnet tool install --global dotnet-ef
+      - export PATH="$PATH:/root/.dotnet/tools"
 
   pre_build:
     commands:
