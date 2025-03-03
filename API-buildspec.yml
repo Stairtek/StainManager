@@ -8,7 +8,7 @@ phases:
       - wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh
       - chmod +x dotnet-install.sh
       # Install .NET 9.0s
-      - ./dotnet-install.sh --version 9.0.100 --install-dir /usr/share/dotnet
+      - ./dotnet-install.sh --version 9.0.200 --install-dir /usr/share/dotnet
       # Add dotnet to PATH
       - export PATH="/usr/share/dotnet:$PATH"
       - dotnet --info
