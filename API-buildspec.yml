@@ -146,8 +146,6 @@ phases:
       # Package everything
       - cd ../publish && zip -r ../deploy_package.zip *
       - cd ..
-      - mkdir -p ./scripts
-      - cp -r ./scripts/* ./scripts/
       - cp ./appspec.yml ./
       - zip -r deployment.zip deploy_package.zip appspec.yml scripts/ db-migrations.sql
 
