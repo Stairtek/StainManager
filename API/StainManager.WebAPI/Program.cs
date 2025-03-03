@@ -17,7 +17,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     {
         throw new InvalidOperationException("Connection string 'DefaultConnection' is not set.");
     }
-    options.UseSqlServer(connectionString);
+    options.UseSqlServer("Data Source=awseb-e-gkdkcruri3-stack-awsebrdsdatabase-bihhtneld34v.crrxev2p5657.us-east-2.rds.amazonaws.com,1433; Initial Catalog=StainManager; Integrated Security=false; User ID=admin; Password=!Cakeja5047;");
 });
 
 builder.Services.AddInfrastructure(builder.Configuration, logger);
