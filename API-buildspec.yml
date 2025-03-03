@@ -2,8 +2,6 @@ version: 0.2
 
 phases:
   install:
-    runtime-versions:
-      dotnet: 9.0
     commands:
       - echo Installing .NET 9.0...
       # Download the dotnet-install script
