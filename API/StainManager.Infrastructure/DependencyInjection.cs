@@ -19,16 +19,7 @@ public static class DependencyInjection
         IConfiguration configuration,
         ILogger logger)
     {
-        services.AddDbContext<ApplicationDbContext>(options =>
-        {
-            var connectionString = configuration.GetConnectionString("DefaultConnection");
-            logger.LogInformation("Using connection string: {ConnectionString}", connectionString);
-            if (string.IsNullOrEmpty(connectionString))
-            {
-                throw new InvalidOperationException("Connection string 'DefaultConnection' is not set.");
-            }
-            options.UseSqlServer(connectionString);
-        });
+        
 
         services.AddRepositories();
         

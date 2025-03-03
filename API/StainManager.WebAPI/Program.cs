@@ -1,3 +1,5 @@
+using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
 var logger = LoggerFactory.Create(loggingBuilder =>
@@ -6,6 +8,18 @@ var logger = LoggerFactory.Create(loggingBuilder =>
 }).CreateLogger("Program");
 
 builder.Services.AddApplication();
+
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+{
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+    logger.LogInformation("Using connection string: {ConnectionString}", connectionString);
+    if (string.IsNullOrEmpty(connectionString))
+    {
+        throw new InvalidOperationException("Connection string 'DefaultConnection' is not set.");
+    }
+    options.UseSqlServer(connectionString);
+});
+
 builder.Services.AddInfrastructure(builder.Configuration, logger);
 builder.Services.AddWebServices();
 
