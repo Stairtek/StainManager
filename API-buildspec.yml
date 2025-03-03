@@ -2,6 +2,8 @@ version: 0.2
 
 phases:
   install:
+    runtime-versions:
+      dotnet: 9.0
     commands:
       - curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel 9.0
       - dotnet --version
@@ -21,6 +23,10 @@ phases:
 
   post_build:
     commands:
+      - echo Setting environment variables...
+      - export AWS__Profile=""
+      - export AWS__ProfilesLocation=""
+      - export AWS__Region=""
       - echo Publishing the project...
       - dotnet publish --configuration Release --output ./publish
       - echo Checking if publish directory is not empty...
