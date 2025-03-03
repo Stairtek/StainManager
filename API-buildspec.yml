@@ -33,7 +33,7 @@ phases:
           echo Publish directory is empty, skipping zip creation;
         fi
       - echo Creating EF Core migrations bundle...
-      - dotnet ef migrations bundle --project API/StainManager.WebAPI --output ./efbundle
+      - dotnet ef migrations bundle --project API/StainManager.Infrastructure --startup-project API/StainManager.WebAPI --output ./efbundle
       - echo Creating zip file for EF Core migrations bundle...
       - zip -r efbundle.zip efbundle
 
