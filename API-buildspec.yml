@@ -22,6 +22,7 @@ phases:
   post_build:
     commands:
       - echo Setting environment variables...
+      - export ConnectionStrings__DefaultConnection="Data Source=awseb-e-gkdkcruri3-stack-awsebrdsdatabase-bihhtneld34v.crrxev2p5657.us-east-2.rds.amazonaws.com,1433; Initial Catalog=StainManager; Integrated Security=false; User ID=admin; Password=!Cakeja5047;"
       - export AWS__Profile=""
       - export AWS__ProfilesLocation=""
       - export AWS__Region=""
