@@ -2,57 +2,47 @@ version: 0.2
 
 phases:
   install:
+    runtime-versions:
+      dotnet: 9.0
     commands:
-      - curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel 9.0
-      - dotnet --version
-      - echo Installing dotnet-ef tool...
-      - dotnet tool install --global dotnet-ef
-      - export PATH="$PATH:/root/.dotnet/tools"
-
+      # Install any dependencies needed
+      - echo Installing dependencies...
+  
   pre_build:
     commands:
-      - echo Restoring dependencies...
-      - dotnet restore ./API/StainManager.WebAPI/StainManager.WebAPI.csproj
-
+      # Restore NuGet packages
+      - echo Restoring NuGet packages...
+      - dotnet restore
+      
+      # Run tests (optional)
+      - echo Running tests...
+      - dotnet test --no-restore
+  
   build:
     commands:
-      - echo Building the project...
-      - dotnet build --configuration Release
+      # Build the application
+      - echo Building the application...
+      - dotnet build --configuration Release --no-restore
+      
+      # Publish the application
+      - echo Publishing the application...
+      - dotnet publish --configuration Release --no-build --output ./publish
 
   post_build:
     commands:
-      - echo Setting environment variables...
-      - export ConnectionStrings__DefaultConnection="Data Source=awseb-e-gkdkcruri3-stack-awsebrdsdatabase-bihhtneld34v.crrxev2p5657.us-east-2.rds.amazonaws.com,1433; Initial Catalog=StainManager; Integrated Security=false; User ID=admin; Password=!Cakeja5047;"
-      - export AWS__Profile=""
-      - export AWS__ProfilesLocation=""
-      - export AWS__Region=""
-      - echo Publishing the project...
-      - dotnet publish --configuration Release --output ./publish
-      - echo Checking if publish directory is not empty...
-      - if [ -n "$(ls -A ./publish)" ]; then
-          echo Creating zip file...;
-          cd publish;
-          zip -r ../StainManager.WebAPI.zip .;
-          cd ..;
-        else
-          echo Publish directory is empty, skipping zip creation;
-        fi
-      - echo Displaying the connection string environment variable...
-      - echo $ConnectionStrings__DefaultConnection
-      - echo Creating EF Core migrations bundle...
-      - dotnet ef migrations bundle --configuration Release \
-        --project API/StainManager.Infrastructure \
-        --startup-project API/StainManager.WebAPI \
-        --connection "Data Source=awseb-e-gkdkcruri3-stack-awsebrdsdatabase-bihhtneld34v.crrxev2p5657.us-east-2.rds.amazonaws.com,1433; Initial Catalog=StainManager; Integrated Security=false; User ID=admin; Password=!Cakeja5047;" \
-        --output ./efbundle.exe
-      - echo Creating zip file for EF Core migrations bundle...
-      - zip -r efbundle.zip efbundle.exe
+      # Any post build steps, like creating deployment packages
+      - echo Build completed on `date`
+      # Create deployment artifacts zip
+      - cd publish && zip -r ../deploy_package.zip *
+      # Clear any previous artifacts
+      - rm -rf ./publish
 
 artifacts:
   files:
-    - StainManager.WebAPI.zip
-    - efbundle.zip
-  discard-paths: yes
+    - deploy_package.zip
+    - appspec.yml
+    - scripts/**/*
+  discard-paths: no
 
 cache:
   paths:
