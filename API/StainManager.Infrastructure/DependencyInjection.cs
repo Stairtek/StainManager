@@ -7,6 +7,8 @@ using StainManager.Domain.Species;
 using StainManager.Domain.Textures;
 using StainManager.Infrastructure.Repositories;
 using StainManager.Infrastructure.Services.S3;
+using Microsoft.Extensions.Logging;
+using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace StainManager.Infrastructure;
 
@@ -14,12 +16,13 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(
         this IServiceCollection services,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        ILogger logger)
     {
         services.AddDbContext<ApplicationDbContext>(options =>
         {
             var connectionString = configuration.GetConnectionString("DefaultConnection");
-            Console.WriteLine($"Connection string: {connectionString}");
+            logger.LogInformation("Using connection string: {ConnectionString}", connectionString);
             if (string.IsNullOrEmpty(connectionString))
             {
                 throw new InvalidOperationException("Connection string 'DefaultConnection' is not set.");

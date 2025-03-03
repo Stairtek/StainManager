@@ -1,7 +1,12 @@
 var builder = WebApplication.CreateBuilder(args);
 
+var logger = LoggerFactory.Create(loggingBuilder =>
+{
+    loggingBuilder.AddConsole();
+}).CreateLogger("Program");
+
 builder.Services.AddApplication();
-builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddInfrastructure(builder.Configuration, logger);
 builder.Services.AddWebServices();
 
 var app = builder.Build();
