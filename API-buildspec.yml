@@ -40,7 +40,11 @@ phases:
       - echo Displaying the connection string environment variable...
       - echo $ConnectionStrings__DefaultConnection
       - echo Creating EF Core migrations bundle...
-      - dotnet ef migrations bundle --configuration Release --project API/StainManager.Infrastructure --startup-project API/StainManager.WebAPI --output ./efbundle.exe
+      - dotnet ef migrations bundle --configuration Release \
+        --project API/StainManager.Infrastructure \
+        --startup-project API/StainManager.WebAPI \
+        --connection "Data Source=awseb-e-gkdkcruri3-stack-awsebrdsdatabase-bihhtneld34v.crrxev2p5657.us-east-2.rds.amazonaws.com,1433; Initial Catalog=StainManager; Integrated Security=false; User ID=admin; Password=!Cakeja5047;" \
+        --output ./efbundle.exe
       - echo Creating zip file for EF Core migrations bundle...
       - zip -r efbundle.zip efbundle.exe
 
