@@ -3,11 +3,11 @@ version: 0.2
 phases:
   install:
     commands:
-      - echo Installing .NET 9.0...
+      - echo Installing .NET 9.0.200...
       # Download the dotnet-install script
       - wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh
       - chmod +x dotnet-install.sh
-      # Install .NET 9.0s
+      # Install .NET 9.0.200
       - ./dotnet-install.sh --version 9.0.200 --install-dir /usr/share/dotnet
       # Add dotnet to PATH
       - export PATH="/usr/share/dotnet:$PATH"
@@ -15,32 +15,34 @@ phases:
   
   pre_build:
     commands:
-      # Restore NuGet packages
+      # Navigate to the API directory
+      - cd API
+      # Restore NuGet packages for the WebAPI project
       - echo Restoring NuGet packages...
-      - dotnet restore
+      - dotnet restore StainManager.WebAPI/StainManager.WebAPI.csproj
       
-      # Run tests (optional)
-      - echo Running tests...
-      - dotnet test --no-restore
+      # Run tests if you have them (adjust the path as needed)
+      # - echo Running tests...
+      # - dotnet test StainManager.Tests/StainManager.Tests.csproj --no-restore
   
   build:
     commands:
-      # Build the application
-      - echo Building the application...
-      - dotnet build --configuration Release --no-restore
+      # Build only the WebAPI project (which will build dependencies)
+      - echo Building the WebAPI application...
+      - dotnet build StainManager.WebAPI/StainManager.WebAPI.csproj --configuration Release --no-restore
       
-      # Publish the application
-      - echo Publishing the application...
-      - dotnet publish --configuration Release --no-build --output ./publish
+      # Publish only the WebAPI project
+      - echo Publishing the WebAPI application...
+      - dotnet publish StainManager.WebAPI/StainManager.WebAPI.csproj --configuration Release --no-build --output ../publish
 
   post_build:
     commands:
-      # Any post build steps, like creating deployment packages
+      # Any post build steps
       - echo Build completed on `date`
-      # Create deployment artifacts zip
-      - cd publish && zip -r ../deploy_package.zip *
-      # Clear any previous artifacts
-      - rm -rf ./publish
+      # Create deployment artifacts zip from the publish directory
+      - cd ../publish && zip -r ../deploy_package.zip *
+      # Clean up
+      - cd .. && rm -rf ./publish
 
 artifacts:
   files:
