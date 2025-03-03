@@ -21,10 +21,15 @@ phases:
     commands:
       - echo Publishing the project...
       - dotnet publish --configuration Release --output ./publish
-      - echo Creating zip file...
-      - cd publish
-      - zip -r ../StainManager.WebAPI.zip
-      - cd ..
+      - echo Checking if publish directory is not empty...
+      - if [ -n "$(ls -A ./publish)" ]; then
+          echo Creating zip file...;
+          cd publish;
+          zip -r ../StainManager.WebAPI.zip .;
+          cd ..;
+        else
+          echo Publish directory is empty, skipping zip creation;
+        fi
       - echo Creating EF Core migrations bundle...
       - dotnet ef migrations bundle --output ./efbundle
       - echo Creating zip file for EF Core migrations bundle...
