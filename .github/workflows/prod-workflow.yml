@@ -73,7 +73,7 @@ jobs:
       - name: Prepare Elastic Beanstalk Configuration
         run: |
           mkdir -p ./deploy-package/.ebextensions
-          cp StainManager/API/StainManager.WebAPI/.ebextensions/prod/config.yml ./deploy-package/.ebextensions/config.yml
+          cp API/StainManager.WebAPI/.ebextensions/prod/config.yml ./deploy-package/.ebextensions/config.yml
           
           # Replace placeholder with actual environment variable reference
           sed -i 's/${PROD_CONN_STRING}/${{ secrets.PROD_DB_CONNECTION_STRING }}/g' ./deploy-package/.ebextensions/config.yml
