@@ -8,7 +8,7 @@ on:
 
 env:
   DOTNET_VERSION: '9.0.x'
-  SOLUTION_PATH: 'StainManager/API/StainManager.WebAPI/StainManager.WebAPI.csproj'
+  SOLUTION_PATH: 'API/StainManager.WebAPI/StainManager.WebAPI.csproj'
   ARTIFACT_NAME: 'stainmanager-webapi-prod'
   EB_APPLICATION_NAME: 'StainManager'
   EB_ENVIRONMENT_NAME: 'StainManager-prod'
