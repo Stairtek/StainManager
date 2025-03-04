@@ -138,7 +138,7 @@ jobs:
           echo "Using connection string pattern: Server=***;Database=***;..."
           
           # Apply migrations using the local tool with explicit connection string
-          dotnet ef database update --startup-project ../StainManager.WebAPI --connection "${CONNECTION_STRING}"
+          dotnet ef database update --startup-project ../StainManager.WebAPI --connection "${{ secrets.PROD_DB_CONNECTION_STRING }}"
           
           # Verify migration success
           if [ $? -eq 0 ]; then
