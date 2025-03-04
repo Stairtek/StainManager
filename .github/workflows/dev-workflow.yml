@@ -93,7 +93,9 @@ jobs:
           cp API/StainManager.WebAPI/.ebextensions/dev/config.yml ./deploy-package/.ebextensions/config.yml
           
           # Replace placeholder with actual environment variable reference
-          sed -i 's/${DEV_CONN_STRING}/${{ secrets.DEV_DB_CONNECTION_STRING }}/g' ./deploy-package/.ebextensions/config.yml
+          echo "${{ secrets.DEV_DB_CONNECTION_STRING }}" > conn_string.txt
+          sed -i "s|\${DEV_CONN_STRING}|$(cat conn_string.txt)|g" ./deploy-package/.ebextensions/config.yml
+          rm conn_string.txt
           
           # After sed replacement
           cat ./deploy-package/.ebextensions/config.yml | grep -v 'Password' # Don't show password in logs
