@@ -4,7 +4,6 @@ option_settings:
   
   aws:elasticbeanstalk:application:environment:
     ASPNETCORE_ENVIRONMENT: Development
-    ConnectionStrings__DefaultConnection: ${DEV_CONN_STRING}
     LOGGING_LEVEL: Debug
   
   aws:autoscaling:launchconfiguration:
