@@ -33,7 +33,10 @@ jobs:
         run: |
           dotnet new tool-manifest --force
           dotnet tool install --local dotnet-ef
-          dotnet tool restore ${{ env.SOLUTION_PATH }}
+          dotnet tool restore
+
+      - name: Restore dependencies
+        run: dotnet restore ${{ env.SOLUTION_PATH }}
 
       - name: Build
         run: dotnet build ${{ env.SOLUTION_PATH }} --configuration Release --no-restore
