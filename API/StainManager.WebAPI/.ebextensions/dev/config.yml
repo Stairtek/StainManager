@@ -3,9 +3,8 @@ option_settings:
     Target Runtime: .NET 9.0
   
   aws:elasticbeanstalk:application:environment:
-    ASPNETCORE_ENVIRONMENT: Production
-    # The connection string will be replaced during deployment
-    # Add any production-specific environment variables
+    ASPNETCORE_ENVIRONMENT: Development
+    ConnectionStrings__DefaultConnection: ${DEV_CONN_STRING}
     LOGGING_LEVEL: Debug
   
   aws:autoscaling:launchconfiguration:

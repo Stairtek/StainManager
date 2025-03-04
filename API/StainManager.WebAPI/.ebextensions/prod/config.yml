@@ -5,7 +5,6 @@ option_settings:
   aws:elasticbeanstalk:application:environment:
     ASPNETCORE_ENVIRONMENT: Production
     ConnectionStrings__DefaultConnection: ${PROD_CONN_STRING}
-    # Add any production-specific environment variables
     LOGGING_LEVEL: Warning
   
   aws:autoscaling:launchconfiguration:
