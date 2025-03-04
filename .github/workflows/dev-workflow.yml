@@ -129,6 +129,32 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
+          
+      - name: Get GitHub Actions IP
+        id: github-ip
+        run: |
+          # Get the current runner's outbound IP
+          GITHUB_RUNNER_IP=$(curl -s https://api.ipify.org)
+          echo "::set-output name=ip::$GITHUB_RUNNER_IP"
+          echo "GitHub Actions runner IP: $GITHUB_RUNNER_IP"
+
+      - name: Update RDS Security Group
+        run: |
+          # Get the runner's IP address
+          GITHUB_RUNNER_IP="${{ steps.github-ip.outputs.ip }}"
+
+          # Define the security group ID for your RDS instance
+          SECURITY_GROUP_ID="sg-0aa037a4d46015754"
+
+          # Add an inbound rule to the security group for the current runner's IP
+          aws ec2 authorize-security-group-ingress \
+            --group-id $SECURITY_GROUP_ID \
+            --protocol tcp \
+            --port 1433 \
+            --cidr "$GITHUB_RUNNER_IP/32" \
+            --description "GitHub Actions Runner (Temporary)"
+
+          echo "Added $GITHUB_RUNNER_IP to RDS security group $SECURITY_GROUP_ID"
 
       - name: Apply database migrations
         env:
@@ -152,3 +178,17 @@ jobs:
             echo "Database migration failed"
             exit 1
           fi
+
+      - name: Remove temporary security group rule
+        if: always() # Run this step even if previous steps fail
+        run: |
+          GITHUB_RUNNER_IP="${{ steps.github-ip.outputs.ip }}"
+          SECURITY_GROUP_ID="sg-0aa037a4d46015754" # Same as above
+      
+          aws ec2 revoke-security-group-ingress \
+            --group-id $SECURITY_GROUP_ID \
+            --protocol tcp \
+            --port 1433 \
+            --cidr "$GITHUB_RUNNER_IP/32"
+      
+          echo "Removed temporary access for $GITHUB_RUNNER_IP from security group"

@@ -19,9 +19,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
         throw new InvalidOperationException("Connection string is not set.");
     }
 
-    var connectionStringLogMessage =
-        string.Concat(connectionString.AsSpan(0, Math.Min(20, connectionString.Length)), "...");
-    logger.LogInformation("Using connection string: {ConnectionString}", connectionStringLogMessage);
+    logger.LogInformation("Using connection string: {ConnectionString}", connectionString);
     
     options.UseSqlServer(connectionString);
 });
