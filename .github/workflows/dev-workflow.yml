@@ -135,7 +135,7 @@ jobs:
         run: |
           # Get the current runner's outbound IP
           GITHUB_RUNNER_IP=$(curl -s https://api.ipify.org)
-          echo "::set-output name=ip::$GITHUB_RUNNER_IP"
+          echo "ip=$GITHUB_RUNNER_IP" >> $GITHUB_OUTPUT
           echo "GitHub Actions runner IP: $GITHUB_RUNNER_IP"
 
       - name: Update RDS Security Group
@@ -151,8 +151,7 @@ jobs:
             --group-id $SECURITY_GROUP_ID \
             --protocol tcp \
             --port 1433 \
-            --cidr "$GITHUB_RUNNER_IP/32" \
-            --description "GitHub Actions Runner (Temporary)"
+            --cidr "$GITHUB_RUNNER_IP/32"
 
           echo "Added $GITHUB_RUNNER_IP to RDS security group $SECURITY_GROUP_ID"
 
