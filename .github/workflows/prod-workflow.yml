@@ -134,5 +134,16 @@ jobs:
           # Navigate to the right project directory
           cd API/StainManager.Infrastructure
           
-          # Apply migrations
-          dotnet ef database update --connection "$CONNECTION_STRING" --startup-project ../StainManager.WebAPI
+          # Print connection string format (without exposing actual values)
+          echo "Using connection string pattern: Server=***;Database=***;..."
+          
+          # Apply migrations using the local tool with explicit connection string
+          dotnet ef database update --startup-project ../StainManager.WebAPI --connection "${CONNECTION_STRING}"
+          
+          # Verify migration success
+          if [ $? -eq 0 ]; then
+            echo "Database migrations applied successfully"
+          else
+            echo "Database migration failed"
+            exit 1
+          fi
