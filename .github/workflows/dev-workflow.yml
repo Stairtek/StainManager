@@ -125,16 +125,19 @@ jobs:
           wait_for_deployment: true
           wait_for_environment_recovery: 300
 
+      - name: Setup .NET for migrations
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
       - name: Apply database migrations
         env:
           CONNECTION_STRING: ${{ secrets.DEV_DB_CONNECTION_STRING }}
         run: |
-          # Install EF Core tools
-          dotnet tool install --global dotnet-ef
-          
-          # Clone repository to get the DbContext project
-          git clone https://github.com/${{ github.repository }}.git repo
-          cd repo
+          # Install EF Core tools locally to avoid conflicts with global.json
+          dotnet new tool-manifest --force
+          dotnet tool install --local dotnet-ef
+          dotnet tool restore
           
           # Navigate to the right project directory
           cd API/StainManager.Infrastructure
