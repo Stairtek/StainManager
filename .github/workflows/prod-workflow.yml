@@ -26,8 +26,14 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: Restore dependencies
-        run: dotnet restore ${{ env.SOLUTION_PATH }}
+      - name: Verify .NET installation
+        run: dotnet --info
+
+      - name: Install EF Core tools
+        run: |
+          dotnet new tool-manifest --force
+          dotnet tool install --local dotnet-ef
+          dotnet tool restore ${{ env.SOLUTION_PATH }}
 
       - name: Build
         run: dotnet build ${{ env.SOLUTION_PATH }} --configuration Release --no-restore
