@@ -3,7 +3,6 @@ version: 0.2
 env:
   variables:
     ASPNETCORE_ENVIRONMENT: "Development"
-  # Use Secrets Manager to access the connection string
   secrets-manager:
     CONNECTION_STRING: "StainManager/Dev/ConnectionString:ConnectionString"
 
@@ -31,126 +30,106 @@ phases:
       - echo Building the WebAPI application...
       - dotnet build StainManager.WebAPI/StainManager.WebAPI.csproj --configuration Release --no-restore
       
-      # Generate migration scripts but don't apply them
+      # Generate migration scripts
       - echo Generating EF Core migration scripts...
       - dotnet ef migrations script --idempotent --output ../db-migrations.sql --project StainManager.Infrastructure/StainManager.Infrastructure.csproj --startup-project StainManager.WebAPI/StainManager.WebAPI.csproj
 
       - echo Publishing the WebAPI application...
       - dotnet publish StainManager.WebAPI/StainManager.WebAPI.csproj --configuration Release --no-build --output ../publish
+      - ls -la ../publish # List files to verify output
+      - find ../publish -name "*.runtimeconfig.json" # Verify .runtimeconfig.json exists
 
   post_build:
     commands:
       - echo Build completed on `date`
-      # Copy migration script to publish directory
-      - cp ../db-migrations.sql ../publish/
       
-      # Create deployment scripts directory
-      - mkdir -p ../scripts
+      # Create Elastic Beanstalk deployment package
+      - cd ../publish
       
-      # Create database migration script with secrets handling
+      # Create Procfile for Elastic Beanstalk
+      - echo "web: dotnet StainManager.WebAPI.dll" > Procfile
+      
+      # Create .ebextensions for configuration
+      - mkdir -p .ebextensions
+      
+      # Create configuration files to set environment variables
       - |
-        cat > ../scripts/apply_migrations.sh << 'EOL'
-        #!/bin/bash
-        echo "Applying database migrations..."
-        
-        # Get connection string from secrets manager
-        CONNECTION_STRING=$(aws secretsmanager get-secret-value --secret-id StainManager/Dev/ConnectionString --query SecretString --output text | jq -r '.ConnectionString')
-        
-        cd $DEPLOYMENT_ROOT
-        export ASPNETCORE_ENVIRONMENT=Development
-        # Set the connection string as an environment variable
-        export ConnectionStrings__DefaultConnection="$CONNECTION_STRING"
-        
-        # Apply migrations using EF Core
-        dotnet ef database update --project $DEPLOYMENT_ROOT/StainManager.Infrastructure.dll --startup-project $DEPLOYMENT_ROOT/StainManager.WebAPI.dll
+        cat > .ebextensions/01-environment.config << 'EOL'
+        option_settings:
+          aws:elasticbeanstalk:application:environment:
+            ASPNETCORE_ENVIRONMENT: Development
         EOL
-      - chmod +x ../scripts/apply_migrations.sh
       
-      # Create application start script with secrets handling
+      # Create a configuration file to retrieve secrets
       - |
-        cat > ../scripts/start_application.sh << 'EOL'
-        #!/bin/bash
-        cd $DEPLOYMENT_ROOT
-        
-        # Get connection string from secrets manager
-        CONNECTION_STRING=$(aws secretsmanager get-secret-value --secret-id StainManager/Dev/ConnectionString --query SecretString --output text | jq -r '.ConnectionString')
-        
-        # Start application with environment variables
-        export ASPNETCORE_ENVIRONMENT=Development
-        export ConnectionStrings__DefaultConnection="$CONNECTION_STRING"
-        
-        # For dev environments
-        nohup dotnet StainManager.WebAPI.dll > /var/log/stainmanager.log 2>&1 &
-        echo $! > /var/run/stainmanager.pid
-        EOL
-      - chmod +x ../scripts/start_application.sh
-      
-      # Create AWS CodeDeploy appspec
-      - |
-        cat > ../appspec.yml << 'EOL'
-        version: 0.0
-        os: linux
+        cat > .ebextensions/02-secrets.config << 'EOL'
         files:
-          - source: /
-            destination: /var/www/stainmanager-dev
-        hooks:
-          BeforeInstall:
-            - location: scripts/before_install.sh
-              timeout: 300
-              runas: root
-          AfterInstall:
-            - location: scripts/after_install.sh
-              timeout: 300
-              runas: root
-          ApplicationStart:
-            - location: scripts/start_application.sh
-              timeout: 300
-              runas: root
+          "/opt/elasticbeanstalk/hooks/appdeploy/pre/01_set_secrets.sh":
+            mode: "000755"
+            owner: root
+            group: root
+            content: |
+              #!/bin/bash
+              # Get connection string from Secrets Manager
+              CONNECTION_STRING=$(aws secretsmanager get-secret-value --secret-id StainManager/Dev/ConnectionString --query SecretString --output text | jq -r '.ConnectionString')
+        
+              # Write to environment variables file
+              echo "export ConnectionStrings__DefaultConnection=\"$CONNECTION_STRING\"" >> /opt/elasticbeanstalk/deployment/env
         EOL
       
-      # Additional deployment scripts
+      # Create a configuration file to run database migrations during deployment
       - |
-        cat > ../scripts/before_install.sh << 'EOL'
-        #!/bin/bash
-        # Stop any existing application
-        if [ -f /var/run/stainmanager.pid ]; then
-          kill $(cat /var/run/stainmanager.pid) || true
-          rm /var/run/stainmanager.pid
-        fi
-        mkdir -p /var/www/stainmanager-dev
-        # Define deployment root for scripts to use
-        export DEPLOYMENT_ROOT=/var/www/stainmanager-dev
+        cat > .ebextensions/03-dbmigration.config << 'EOL'
+        files:
+          "/opt/elasticbeanstalk/hooks/appdeploy/post/01_run_migrations.sh":
+            mode: "000755"
+            owner: root
+            group: root
+            content: |
+              #!/bin/bash
+              # Install EF Core tools if not available
+              if ! command -v dotnet-ef &> /dev/null; then
+                dotnet tool install --global dotnet-ef
+              fi
         
-        # Install required tools if not present
-        if ! command -v jq &> /dev/null; then
-          apt-get update && apt-get install -y jq
-        fi
+              # Set path to include .NET tools
+              export PATH="$HOME/.dotnet/tools:$PATH"
         
-        if ! command -v aws &> /dev/null; then
-          apt-get update && apt-get install -y awscli
-        fi
+              # Navigate to application directory
+              cd /var/app/current
+        
+              # Apply migrations
+              CONNECTION_STRING=$(aws secretsmanager get-secret-value --secret-id StainManager/Dev/ConnectionString --query SecretString --output text | jq -r '.ConnectionString')
+              export ConnectionStrings__DefaultConnection="$CONNECTION_STRING"
+              export ASPNETCORE_ENVIRONMENT=Development
+        
+              # Log migration attempt
+              echo "Running database migrations..." >> /var/log/eb-migration.log
+        
+              # Copy migration SQL script to a temp file
+              cp db-migrations.sql /tmp/db-migrations.sql
+        
+              # Use the SQL script or EF Core command to apply migrations
+              # For safety, we're using dotnet ef in this example
+              dotnet ef database update --project StainManager.Infrastructure.dll --startup-project StainManager.WebAPI.dll >> /var/log/eb-migration.log 2>&1
         EOL
-      - chmod +x ../scripts/before_install.sh
-
-      - |
-        cat > ../scripts/after_install.sh << 'EOL'
-        #!/bin/bash
-        export DEPLOYMENT_ROOT=/var/www/stainmanager-dev
-        chmod +x $DEPLOYMENT_ROOT/scripts/*.sh
-        
-        # Apply migrations as a separate step
-        $DEPLOYMENT_ROOT/scripts/apply_migrations.sh
-        EOL
-      - chmod +x ../scripts/after_install.sh
       
-      # Package everything
-      - cd ../publish && zip -r ../deploy_package.zip *
+      # Create a configuration file to install dependencies
+      - |
+        cat > .ebextensions/00-install-dependencies.config << 'EOL'
+        packages:
+          yum:
+            jq: []
+        EOL
+      
+      # We don't need to create a zip file - EB will package the files correctly
       - cd ..
-      - zip -r deployment.zip deploy_package.zip appspec.yml scripts/ db-migrations.sql
 
 artifacts:
   files:
-    - deployment.zip
+    - publish/**/*
+    - publish/*.runtimeconfig.json # Explicitly include runtimeconfig file
+  base-directory: '.'
   discard-paths: no
 
 cache:
