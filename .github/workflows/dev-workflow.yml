@@ -5,26 +5,21 @@ on:
     branches: [ development ]
   pull_request:
     branches: [ development ]
-  workflow_dispatch:
-    # Manual trigger for development branch
-    inputs:
-      deploy:
-        description: 'Deploy to Elastic Beanstalk'
-        required: true
-        default: true
-        type: boolean
 
 env:
   DOTNET_VERSION: '9.0.200'
-  SOLUTION_PATH: 'API/StainManager.WebAPI/StainManager.WebAPI.csproj'
-  ARTIFACT_NAME: 'stainmanager-webapi-dev'
-  EB_APPLICATION_NAME: 'StainManager'
-  EB_ENVIRONMENT_NAME: 'StainManager-dev'
+  API_PROJECT_PATH: 'API/StainManager.WebAPI/StainManager.WebAPI.csproj'
+  API_ARTIFACT_NAME: 'stainmanager-webapi-dev'
+  API_EB_APPLICATION_NAME: 'StainManager'
+  API_EB_ENVIRONMENT_NAME: 'StainManager-API-dev'
+  ui_PROJECT_PATH: 'Client/StainManager.Blazor.WebUI.Server/StainManager.Blazor.WebUI.Server.csproj'
+  UI_ARTIFACT_NAME: 'stainmanager-ui-dev'
+  UI_EB_APPLICATION_NAME: 'StainManager'
+  UI_EB_ENVIRONMENT_NAME: 'StainManager-UI-dev'
   AWS_REGION: 'us-east-2'
-  # Update the region as needed
 
 jobs:
-  build:
+  build-api:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -44,10 +39,10 @@ jobs:
           dotnet tool restore
           
       - name: Restore dependencies
-        run: dotnet restore ${{ env.SOLUTION_PATH }}
+        run: dotnet restore ${{ env.API_PROJECT_PATH }}
 
       - name: Build
-        run: dotnet build ${{ env.SOLUTION_PATH }} --configuration Release --no-restore
+        run: dotnet build ${{ env.API_PROJECT_PATH }} --configuration Release --no-restore
 
       - name: Test
         run: |
@@ -58,7 +53,7 @@ jobs:
           done
 
       - name: Publish
-        run: dotnet publish ${{ env.SOLUTION_PATH }} --configuration Release --output ./publish --no-build
+        run: dotnet publish ${{ env.API_PROJECT_PATH }} --configuration Release --output ./publish --no-build
 
       - name: Generate deployment package
         run: |
@@ -70,12 +65,12 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.ARTIFACT_NAME }}
+          name: ${{ env.API_ARTIFACT_NAME }}
           path: deploy.zip
           retention-days: 1
 
-  deploy:
-    needs: build
+  deploy-api:
+    needs: build-api
     runs-on: ubuntu-latest
     if: github.event_name != 'pull_request'
     steps:
@@ -84,7 +79,7 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
-          name: ${{ env.ARTIFACT_NAME }}
+          name: ${{ env.API_ARTIFACT_NAME }}
           path: ./deploy-package/
 
       - name: Prepare Elastic Beanstalk Configuration
@@ -113,8 +108,8 @@ jobs:
         with:
           aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          application_name: ${{ env.EB_APPLICATION_NAME }}
-          environment_name: ${{ env.EB_ENVIRONMENT_NAME }}
+          application_name: ${{ env.API_EB_APPLICATION_NAME }}
+          environment_name: ${{ env.API_EB_ENVIRONMENT_NAME }}
           version_label: dev-${{ github.run_number }}-${{ github.sha }}
           region: ${{ env.AWS_REGION }}
           deployment_package: deploy.zip
@@ -141,7 +136,7 @@ jobs:
           GITHUB_RUNNER_IP="${{ steps.github-ip.outputs.ip }}"
 
           # Define the security group ID for your RDS instance
-          SECURITY_GROUP_ID="sg-0aa037a4d46015754"
+          SECURITY_GROUP_ID="sg-053fe0ccaf3f9f0cf"
 
           # Add an inbound rule to the security group for the current runner's IP
           aws ec2 authorize-security-group-ingress \
@@ -179,7 +174,7 @@ jobs:
         if: always() # Run this step even if previous steps fail
         run: |
           GITHUB_RUNNER_IP="${{ steps.github-ip.outputs.ip }}"
-          SECURITY_GROUP_ID="sg-0aa037a4d46015754" # Same as above
+          SECURITY_GROUP_ID="sg-053fe0ccaf3f9f0cf" # Same as above
       
           aws ec2 revoke-security-group-ingress \
             --group-id $SECURITY_GROUP_ID \
@@ -188,3 +183,71 @@ jobs:
             --cidr "$GITHUB_RUNNER_IP/32"
       
           echo "Removed temporary access for $GITHUB_RUNNER_IP from security group"
+          
+          
+  build-ui:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore dependencies
+        run: dotnet restore ${{ env.UI_PROJECT_PATH }}
+
+      - name: Build
+        run: dotnet build ${{ env.UI_PROJECT_PATH }} --configuration Release --no-restore
+
+      - name: Publish
+        run: dotnet publish ${{ env.UI_PROJECT_PATH }} --configuration Release --output ./ui-publish
+
+      - name: Generate deployment package
+        run: |
+          cd ui-publish
+          zip -r ui-deploy.zip ./*
+          cd ..
+          mv ui-publish/ui-deploy.zip .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.UI_ARTIFACT_NAME }}
+          path: ui-deploy.zip
+          retention-days: 1
+
+  deploy-ui:
+    needs: [ deploy-api, build-ui ]
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ env.UI_ARTIFACT_NAME }}
+          path: ./ui-deploy-package/
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Deploy UI to Elastic Beanstalk
+        uses: einaregilsson/beanstalk-deploy@v21
+        with:
+          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          application_name: ${{ env.UI_EB_APPLICATION_NAME }}
+          environment_name: ${{ env.UI_EB_ENVIRONMENT_NAME }}
+          version_label: ui-dev-${{ github.run_number }}-${{ github.sha }}
+          region: ${{ env.AWS_REGION }}
+          deployment_package: ./ui-deploy-package/ui-deploy.zip
+          use_existing_version_if_available: true
+          wait_for_deployment: true
+          wait_for_environment_recovery: 300

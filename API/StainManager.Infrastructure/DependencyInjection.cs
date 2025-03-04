@@ -4,6 +4,7 @@ using Amazon.Runtime.CredentialManagement;
 using Amazon.S3;
 using Amazon.SecretsManager;
 using Amazon.SecretsManager.Model;
+using Microsoft.Data.SqlClient;
 using StainManager.Application.Services;
 using StainManager.Domain.Common.Interfaces;
 using StainManager.Domain.Species;
@@ -69,9 +70,33 @@ public static class DependencyInjection
         if (string.IsNullOrEmpty(connectionString))
             throw new InvalidOperationException("Connection string is not set.");
 
-        logger.LogInformation("Using connection string: {ConnectionString}", connectionString);
+        logger.LogInformation("Connection string retrieved successfully. Database: {Server}/{Database}", 
+            GetServerFromConnectionString(connectionString),
+            GetDatabaseFromConnectionString(connectionString));
         
         return connectionString;
+    }
+    
+    private static string GetServerFromConnectionString(string connectionString)
+    {
+        try {
+            var builder = new SqlConnectionStringBuilder(connectionString);
+            return builder.DataSource;
+        }
+        catch {
+            return "unknown";
+        }
+    }
+
+    private static string GetDatabaseFromConnectionString(string connectionString)
+    {
+        try {
+            var builder = new SqlConnectionStringBuilder(connectionString);
+            return builder.InitialCatalog;
+        }
+        catch {
+            return "unknown";
+        }
     }
 
     private static IServiceCollection AddRepositories(
