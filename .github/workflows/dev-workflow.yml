@@ -15,7 +15,7 @@ on:
         type: boolean
 
 env:
-  DOTNET_VERSION: '9.0.x'
+  DOTNET_VERSION: '9.0.200'
   SOLUTION_PATH: 'API/StainManager.WebAPI/StainManager.WebAPI.csproj'
   ARTIFACT_NAME: 'stainmanager-webapi-dev'
   EB_APPLICATION_NAME: 'StainManager'
