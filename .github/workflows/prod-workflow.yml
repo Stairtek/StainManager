@@ -124,7 +124,7 @@ jobs:
 
       - name: Apply database migrations
         env:
-          CONNECTION_STRING: ${{ secrets.PROD_DB_CONNECTION_STRING }}
+          ConnectionStrings__DefaultConnection: ${{ secrets.PROD_DB_CONNECTION_STRING }}
         run: |
           # Install EF Core tools locally to avoid conflicts with global.json
           dotnet new tool-manifest --force
@@ -134,11 +134,8 @@ jobs:
           # Navigate to the right project directory
           cd API/StainManager.Infrastructure
           
-          # Print connection string format (without exposing actual values)
-          echo "Using connection string pattern: Server=***;Database=***;..."
-          
           # Apply migrations using the local tool with explicit connection string
-          dotnet ef database update --startup-project ../StainManager.WebAPI --connection "${{ secrets.PROD_DB_CONNECTION_STRING }}"
+          dotnet ef database update --startup-project ../StainManager.WebAPI
           
           # Verify migration success
           if [ $? -eq 0 ]; then

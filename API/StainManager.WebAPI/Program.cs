@@ -11,14 +11,19 @@ builder.Services.AddApplication();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
-    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-    logger.LogInformation("Using connection string: {ConnectionString}", connectionString);
+    var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection") ?? 
+                           builder.Configuration.GetConnectionString("DefaultConnection");
+    
     if (string.IsNullOrEmpty(connectionString))
     {
-        throw new InvalidOperationException("Connection string 'DefaultConnection' is not set.");
+        throw new InvalidOperationException("Connection string is not set.");
     }
-    options.UseSqlServer(Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection") ?? 
-                         builder.Configuration.GetConnectionString("DefaultConnection"));
+
+    var connectionStringLogMessage =
+        string.Concat(connectionString.AsSpan(0, Math.Min(20, connectionString.Length)), "...");
+    logger.LogInformation("Using connection string: {ConnectionString}", connectionStringLogMessage);
+    
+    options.UseSqlServer(connectionString);
 });
 
 builder.Services.AddInfrastructure(builder.Configuration, logger);
