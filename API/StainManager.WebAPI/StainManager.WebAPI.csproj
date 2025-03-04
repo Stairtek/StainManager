@@ -21,4 +21,9 @@
         <ProjectReference Include="..\StainManager.Infrastructure\StainManager.Infrastructure.csproj"/>
     </ItemGroup>
 
+    <ItemGroup>
+      <Content Include=".ebextensions\dev\config.yml" />
+      <Content Include=".ebextensions\prod\config.yml" />
+    </ItemGroup>
+
 </Project>

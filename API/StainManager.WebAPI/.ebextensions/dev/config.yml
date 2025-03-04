@@ -1,0 +1,28 @@
+option_settings:
+  aws:elasticbeanstalk:container:dotnet:
+    Target Runtime: .NET 9.0
+  
+  aws:elasticbeanstalk:application:environment:
+    ASPNETCORE_ENVIRONMENT: Production
+    # The connection string will be replaced during deployment
+    # Add any production-specific environment variables
+    LOGGING_LEVEL: Debug
+  
+  aws:autoscaling:launchconfiguration:
+    InstanceType: t2.micro
+    # Smaller instance type for development
+  
+  aws:elasticbeanstalk:environment:
+    EnvironmentType: SingleInstance
+    # Single instance is fine for development
+  
+  aws:autoscaling:asg:
+    MinSize: 1
+    MaxSize: 1
+
+Resources:
+  AWSEBAutoScalingGroup:
+    Type: "AWS::AutoScaling::AutoScalingGroup"
+    Properties:
+      HealthCheckType: EC2
+      HealthCheckGracePeriod: 300

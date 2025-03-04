@@ -1,0 +1,35 @@
+option_settings:
+  aws:elasticbeanstalk:container:dotnet:
+    Target Runtime: .NET 9.0
+  
+  aws:elasticbeanstalk:application:environment:
+    ASPNETCORE_ENVIRONMENT: Production
+    ConnectionStrings__DefaultConnection: ${PROD_CONN_STRING}
+    # Add any production-specific environment variables
+    LOGGING_LEVEL: Warning
+  
+  aws:autoscaling:launchconfiguration:
+    InstanceType: t2.micro
+    # Larger instance type for production
+  
+  aws:elasticbeanstalk:environment:
+    EnvironmentType: LoadBalanced
+    # Load balanced for production to handle more traffic
+  
+  aws:autoscaling:asg:
+    MinSize: 1
+    MaxSize: 1
+    # Multiple instances for high availability
+  
+  aws:elasticbeanstalk:cloudwatch:logs:
+    StreamLogs: true
+    DeleteOnTerminate: false
+    RetentionInDays: 7
+    # Enhanced logging for production
+
+Resources:
+  AWSEBAutoScalingGroup:
+    Type: "AWS::AutoScaling::AutoScalingGroup"
+    Properties:
+      HealthCheckType: ELB
+      HealthCheckGracePeriod: 300
