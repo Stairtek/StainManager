@@ -1,47 +1,41 @@
-using Microsoft.EntityFrameworkCore;
+using StainManager.WebAPI.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Enhanced logging configuration
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+builder.Logging.AddDebug();
+builder.Logging.SetMinimumLevel(LogLevel.Information);
+
+// Add AWS logging if in production
+builder.Logging.AddAWSProvider(builder.Configuration.GetAWSLoggingConfigSection());
 
 var logger = LoggerFactory.Create(loggingBuilder =>
 {
     loggingBuilder.AddConsole();
+    loggingBuilder.SetMinimumLevel(LogLevel.Information);
 }).CreateLogger("Program");
 
+logger.LogInformation("Application starting up. Environment: {Environment}", 
+    Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production");
+
 builder.Services.AddApplication();
-
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-{
-    var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection") ?? 
-                           builder.Configuration.GetConnectionString("DefaultConnection");
-    
-    if (string.IsNullOrEmpty(connectionString))
-    {
-        throw new InvalidOperationException("Connection string is not set.");
-    }
-
-    logger.LogInformation("Using connection string: {ConnectionString}", connectionString);
-    
-    options.UseSqlServer(connectionString);
-});
-
 builder.Services.AddInfrastructure(builder.Configuration, logger);
 builder.Services.AddWebServices();
 
 var app = builder.Build();
 
+app.UseGlobalExceptionHandler();
+app.UseRequestLogging();
+
 app.MapOpenApi();
 app.MapScalarApiReference();
 
-app.UseExceptionHandler(options => { });
-
 app.UseHttpsRedirection();
-
 app.UseRouting();
-
 app.UseAntiforgery();
-
 app.MapControllers();
-
 app.MapEndpoints();
 
 app.Run();
