@@ -95,6 +95,9 @@ jobs:
           # Replace placeholder with actual environment variable reference
           sed -i 's/${DEV_CONN_STRING}/${{ secrets.DEV_DB_CONNECTION_STRING }}/g' ./deploy-package/.ebextensions/config.yml
           
+          # After sed replacement
+          cat ./deploy-package/.ebextensions/config.yml | grep -v 'Password' # Don't show password in logs
+          
           # Re-zip the deployment package with configuration
           cd ./deploy-package
           unzip -q deploy.zip -d ./contents
