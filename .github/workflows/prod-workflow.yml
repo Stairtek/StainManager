@@ -120,7 +120,7 @@ jobs:
           cd repo
           
           # Navigate to the right project directory
-          cd StainManager/API/StainManager.Infrastructure
+          cd API/StainManager.Infrastructure
           
           # Apply migrations
           dotnet ef database update --connection "$CONNECTION_STRING" --startup-project ../StainManager.WebAPI
