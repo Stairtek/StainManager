@@ -6,7 +6,13 @@ on:
   pull_request:
     branches: [ development ]
   workflow_dispatch:
-  # Allows manual trigger from GitHub UI
+    # Manual trigger for development branch
+    inputs:
+      deploy:
+        description: 'Deploy to Elastic Beanstalk'
+        required: true
+        default: 'true'
+        type: boolean
 
 env:
   DOTNET_VERSION: '9.0.x'
