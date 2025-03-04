@@ -2,6 +2,8 @@ using System.Reflection;
 using Amazon;
 using Amazon.Runtime.CredentialManagement;
 using Amazon.S3;
+using Amazon.SecretsManager;
+using Amazon.SecretsManager.Model;
 using StainManager.Application.Services;
 using StainManager.Domain.Common.Interfaces;
 using StainManager.Domain.Species;
@@ -22,17 +24,7 @@ public static class DependencyInjection
     {
         services.AddDbContext<ApplicationDbContext>(options =>
         {
-            var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection") ?? 
-                                   configuration.GetConnectionString("DefaultConnection");
-    
-            if (string.IsNullOrEmpty(connectionString))
-            {
-                throw new InvalidOperationException("Connection string is not set.");
-            }
-
-            logger.LogInformation("Using connection string: {ConnectionString}", connectionString);
-    
-            options.UseSqlServer(connectionString);
+            options.UseSqlServer(configuration.GetConnectionString(logger));
         });
 
         services.AddRepositories();
@@ -42,6 +34,44 @@ public static class DependencyInjection
         services.AddScoped<IImageService, ImageService>();
 
         return services;
+    }
+    
+    private static string? GetConnectionString(
+        this IConfiguration configuration,
+        ILogger logger)
+    {
+        var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection");
+            
+        if (string.IsNullOrEmpty(connectionString))
+            configuration.GetConnectionString("DefaultConnection");
+    
+        if (string.IsNullOrEmpty(connectionString))
+        {
+            try
+            {
+                var secretsManagerClient = new AmazonSecretsManagerClient(RegionEndpoint.GetBySystemName("us-east-2"));
+                var request = new GetSecretValueRequest
+                {
+                    SecretId = "StainManager/Dev/ConnectionString"
+                };
+            
+                var response = secretsManagerClient.GetSecretValueAsync(request).Result;
+                connectionString = response.SecretString;
+            
+                logger.LogInformation("Retrieved connection string from AWS Secrets Manager");
+            }
+            catch (Exception error)
+            {
+                logger.LogError(error, "Failed to retrieve connection string from AWS Secrets Manager");
+            }
+        }
+            
+        if (string.IsNullOrEmpty(connectionString))
+            throw new InvalidOperationException("Connection string is not set.");
+
+        logger.LogInformation("Using connection string: {ConnectionString}", connectionString);
+        
+        return connectionString;
     }
 
     private static IServiceCollection AddRepositories(
