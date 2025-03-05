@@ -15,8 +15,8 @@ public class ImageService(
     : IImageService
 {
     private static readonly RegionEndpoint BucketRegion = RegionEndpoint.USEast2;
-    private const string BucketName = "mcampbell-aws";
-    private const string MainDirectory = "stain-manager";
+    private const string BucketName = "stain-manager";
+    private readonly string _mainDirectory = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Other";
 
     private static string FileKeyPrefixURL
         => $"https://{BucketName}.s3.{BucketRegion.SystemName}.{BucketRegion.PartitionDnsSuffix}/";
@@ -32,13 +32,13 @@ public class ImageService(
         {
             var imageBytes = Convert.FromBase64String(imageContent);
             var fileExtension = GetFileExtensionFromMediaType(mediaType);
-            var fileKey = $"{MainDirectory}/{directory}/{id}.{fileExtension}";
+            var fileKey = $"{_mainDirectory}/{directory}/{id}.{fileExtension}";
             
             var uploadResult = await UploadToS3Async(fileKey, imageBytes, fileName, mediaType);
             if (!uploadResult.Success)
                 return Result.Fail<ImageUploadResult>("Failed to upload image", true);
 
-            var thumbnailKey = $"{MainDirectory}/{directory}/{id}_thumbnail.{fileExtension}";
+            var thumbnailKey = $"{_mainDirectory}/{directory}/{id}_thumbnail.{fileExtension}";
             var thumbnail = await ImageHelper.CreateThumbnail(imageBytes);
             
             var thumbnailUploadResult = await UploadToS3Async(
@@ -165,10 +165,10 @@ public class ImageService(
             var tempImageFileKey = tempImageURL.Replace(FileKeyPrefixURL, string.Empty);
             var fileExtension = Path.GetExtension(tempImageFileKey);
             var uniqueId = codeGenerator.GenerateCode(6);
-            var newFileKey = $"{MainDirectory}/{directory}/{id}_{uniqueId}{fileExtension}";
+            var newFileKey = $"{_mainDirectory}/{directory}/{id}_{uniqueId}{fileExtension}";
             
             if (isThumbnail)
-                newFileKey = $"{MainDirectory}/{directory}/{id}_thumbnail_{uniqueId}{fileExtension}";
+                newFileKey = $"{_mainDirectory}/{directory}/{id}_thumbnail_{uniqueId}{fileExtension}";
             
             var copyRequest = new CopyObjectRequest
             {
