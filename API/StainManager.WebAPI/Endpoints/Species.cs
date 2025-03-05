@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc;
 using StainManager.Application.Species.Commands.CreateSpecies;
 using StainManager.Application.Species.Commands.DeleteSpecies;
 using StainManager.Application.Species.Commands.RestoreSpecies;
@@ -13,6 +14,7 @@ public class Species : EndpointGroupBase
     public override void Map(WebApplication app)
     {
         app.MapGroup(this)
+            .MapGet(TestSentry, "test-sentry")
             .MapGet(GetSpecies)
             .MapGet(GetSpeciesForManagement, "management")
             .MapGet(GetSpeciesById, "{id}")
@@ -20,6 +22,11 @@ public class Species : EndpointGroupBase
             .MapPut(UpdateSpecies, "{id}")
             .MapPatch(RestoreSpecies, "{id}/restore")
             .MapDelete(DeleteSpecies, "{id}");
+    }
+
+    public IActionResult TestSentry()
+    {
+        throw new Exception("Test exception to verify Sentry is working.");
     }
 
     public async Task<IResult> GetSpecies(

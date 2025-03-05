@@ -2,13 +2,24 @@ using StainManager.WebAPI.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.WebHost.UseSentry(options =>
+{
+    builder.Configuration.GetSection("Sentry").Bind(options);
+    
+    var environment = builder.Environment.EnvironmentName;
+    
+    if (string.IsNullOrEmpty(environment))
+        environment = "Other";
+    
+    options.Environment = environment;
+});
+
 // Enhanced logging configuration
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 builder.Logging.AddDebug();
 builder.Logging.SetMinimumLevel(LogLevel.Information);
 
-// Add AWS logging if in production
 if (builder.Environment.IsProduction() || builder.Environment.IsStaging())
 {
     builder.Logging.AddAWSProvider(builder.Configuration.GetAWSLoggingConfigSection());
