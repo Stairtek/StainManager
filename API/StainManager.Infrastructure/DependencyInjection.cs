@@ -12,6 +12,7 @@ using StainManager.Domain.Textures;
 using StainManager.Infrastructure.Repositories;
 using StainManager.Infrastructure.Services.S3;
 using Microsoft.Extensions.Logging;
+using StainManager.Infrastructure.Services.Sentry;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace StainManager.Infrastructure;
@@ -23,6 +24,8 @@ public static class DependencyInjection
         IConfiguration configuration,
         ILogger logger)
     {
+        services.AddSingleton<IExceptionService, SentryExceptionService>();
+        
         services.AddDbContext<ApplicationDbContext>(options =>
         {
             options.UseSqlServer(configuration.GetConnectionString(logger));

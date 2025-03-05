@@ -78,7 +78,7 @@ public class GlobalExceptionHandlerMiddleware(
         };
 
         logger.LogError(exception, "Unhandled exception occurred. Path: {Path}", context.Request.Path);
-        SentrySdk.CaptureException(exception);
+        sentryHub.CaptureException(exception);
         
         return context.Response.WriteAsync(JsonSerializer.Serialize(response, options));
     }

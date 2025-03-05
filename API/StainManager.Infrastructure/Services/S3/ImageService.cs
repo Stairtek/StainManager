@@ -5,12 +5,13 @@ using Microsoft.Extensions.Logging;
 using StainManager.Application.Common.Helpers;
 using StainManager.Application.Services;
 using StainManager.Domain.Common;
+using StainManager.Infrastructure.Services.Sentry;
 
 namespace StainManager.Infrastructure.Services.S3;
 
 public class ImageService(
     IAmazonS3 s3Client,
-    ILogger<ImageService> logger,
+    IExceptionService exceptionService,
     ICodeGenerator codeGenerator)
     : IImageService
 {
@@ -28,6 +29,15 @@ public class ImageService(
         string? fileName = "",
         string? mediaType = "image/jpg")
     {
+        var additionalDataForSentry = new Dictionary<string, string>
+        {
+            { "Operation", "UploadImageAsync" },
+            { "Directory", directory },
+            { "Id", id.ToString() },
+            { "FileName", fileName ?? "" },
+            { "MediaType", mediaType ?? "" }
+        };
+        
         try
         {
             var imageBytes = Convert.FromBase64String(imageContent);
@@ -60,18 +70,18 @@ public class ImageService(
         }
         catch (ArgumentException argumentException)
         {
-            logger.LogError(argumentException, "Error uploading image");
+            exceptionService.CaptureException(argumentException, additionalDataForSentry);
             return Result.Fail<ImageUploadResult>(argumentException.Message);        
         }
         catch (AmazonS3Exception s3Exception)
         {
-            logger.LogError(s3Exception, "Error uploading image to S3");
+            exceptionService.CaptureException(s3Exception, additionalDataForSentry);
             return Result.Fail<ImageUploadResult>($"S3 error: {s3Exception.Message}");
         }
-        catch (Exception ex)
+        catch (Exception exception)
         {
-            logger.LogError(ex, "Error uploading image");
-            return Result.Fail<ImageUploadResult>($"Error uploading image: {ex.Message}");
+            exceptionService.CaptureException(exception, additionalDataForSentry);
+            return Result.Fail<ImageUploadResult>($"Error uploading image: {exception.Message}");
         }
     }
     
@@ -157,6 +167,14 @@ public class ImageService(
         int id,
         bool isThumbnail = false)
     {
+        var additionalDataForSentry = new Dictionary<string, string>
+        {
+            { "Operation", "MoveTempImageAsync" },
+            { "Directory", directory },
+            { "Id", id.ToString() },
+            { "IsThumbnail", isThumbnail.ToString() }
+        };
+        
         try
         {
             if (tempImageURL is null)
@@ -196,9 +214,15 @@ public class ImageService(
             
             return Result.Ok($"{FileKeyPrefixURL}{newFileKey}");
         }
-        catch (Exception ex)
+        catch (AmazonS3Exception s3Exception)
         {
-            return Result.Fail<string>($"Error moving image: {ex.Message}");
+            exceptionService.CaptureException(s3Exception, additionalDataForSentry);
+            return Result.Fail<string>($"S3 error: {s3Exception.Message}");
+        }
+        catch (Exception exception)
+        {
+            exceptionService.CaptureException(exception, additionalDataForSentry);
+            return Result.Fail<string>($"Error moving image: {exception.Message}");
         }
     }
 }
