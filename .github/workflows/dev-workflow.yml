@@ -12,7 +12,7 @@ env:
   API_ARTIFACT_NAME: 'stainmanager-webapi-dev'
   API_EB_APPLICATION_NAME: 'StainManager'
   API_EB_ENVIRONMENT_NAME: 'StainManager-API-dev'
-  ui_PROJECT_PATH: 'Client/StainManager.Blazor.WebUI.Server/StainManager.Blazor.WebUI.Server.csproj'
+  UI_PROJECT_PATH: 'Client/StainManager.Blazor.WebUI.Server/StainManager.Blazor.WebUI.Server.csproj'
   UI_ARTIFACT_NAME: 'stainmanager-ui-dev'
   UI_EB_APPLICATION_NAME: 'StainManager'
   UI_EB_ENVIRONMENT_NAME: 'StainManager-UI-dev'
@@ -183,6 +183,7 @@ jobs:
             --cidr "$GITHUB_RUNNER_IP/32"
       
           echo "Removed temporary access for $GITHUB_RUNNER_IP from security group"
+          
           
           
   build-ui:
