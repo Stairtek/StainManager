@@ -136,7 +136,7 @@ jobs:
           GITHUB_RUNNER_IP="${{ steps.github-ip.outputs.ip }}"
 
           # Define the security group ID for your RDS instance
-          SECURITY_GROUP_ID="sg-053fe0ccaf3f9f0cf"
+          SECURITY_GROUP_ID="sg-01f87b3b9607f2c7a"
 
           # Add an inbound rule to the security group for the current runner's IP
           aws ec2 authorize-security-group-ingress \
@@ -174,7 +174,7 @@ jobs:
         if: always() # Run this step even if previous steps fail
         run: |
           GITHUB_RUNNER_IP="${{ steps.github-ip.outputs.ip }}"
-          SECURITY_GROUP_ID="sg-053fe0ccaf3f9f0cf" # Same as above
+          SECURITY_GROUP_ID="sg-01f87b3b9607f2c7a" # Same as above
       
           aws ec2 revoke-security-group-ingress \
             --group-id $SECURITY_GROUP_ID \
