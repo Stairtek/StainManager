@@ -1,6 +1,7 @@
 using Amazon;
 using Amazon.S3;
 using Amazon.S3.Model;
+using Microsoft.Extensions.Logging;
 using StainManager.Application.Common.Helpers;
 using StainManager.Application.Services;
 using StainManager.Domain.Common;
@@ -9,6 +10,7 @@ namespace StainManager.Infrastructure.Services.S3;
 
 public class ImageService(
     IAmazonS3 s3Client,
+    ILogger<ImageService> logger,
     ICodeGenerator codeGenerator)
     : IImageService
 {
@@ -58,14 +60,17 @@ public class ImageService(
         }
         catch (ArgumentException argumentException)
         {
+            logger.LogError(argumentException, "Error uploading image");
             return Result.Fail<ImageUploadResult>(argumentException.Message);        
         }
         catch (AmazonS3Exception s3Exception)
         {
+            logger.LogError(s3Exception, "Error uploading image to S3");
             return Result.Fail<ImageUploadResult>($"S3 error: {s3Exception.Message}");
         }
         catch (Exception ex)
         {
+            logger.LogError(ex, "Error uploading image");
             return Result.Fail<ImageUploadResult>($"Error uploading image: {ex.Message}");
         }
     }

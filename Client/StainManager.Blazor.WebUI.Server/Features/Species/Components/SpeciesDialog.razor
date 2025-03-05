@@ -93,17 +93,20 @@
                             </MudFileUpload>
                         </MudItem>
                         
-                        <MudItem 
-                            xs="6"
-                            Class="d-flex align-center justify-end">
-                            <MudPaper
-                                Elevation="0">
-                                <MudLink
-                                    OnClick="ConfigureImage">
-                                    Configure Image
-                                </MudLink>
-                            </MudPaper>
-                        </MudItem>
+                        @if (_species.FullImageLocation is not null)
+                        {
+                            <MudItem 
+                                xs="6"
+                                Class="d-flex align-center justify-end">
+                                <MudPaper
+                                    Elevation="0">
+                                    <MudLink
+                                        OnClick="ConfigureImage">
+                                        Configure Image
+                                    </MudLink>
+                                </MudPaper>
+                            </MudItem>
+                        }
                     </MudGrid>
                     
                     @if (_species.FullImageLocation is not null)
