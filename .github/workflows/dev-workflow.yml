@@ -53,11 +53,11 @@ jobs:
           done
 
       - name: Publish
-        run: dotnet publish ${{ env.API_PROJECT_PATH }} --configuration Release --output ./publish --no-build
+        run: dotnet publish ${{ env.API_PROJECT_PATH }} --configuration Release --output ./api-publish --no-build
 
       - name: Generate deployment package
         run: |
-          cd publish
+          cd api-publish
           zip -r api-deploy.zip ./*
           cd ..
           mv api-publish/api-deploy.zip .
