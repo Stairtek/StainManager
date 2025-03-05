@@ -66,7 +66,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.API_ARTIFACT_NAME }}
-          path: deploy.zip
+          path: api-deploy.zip
           retention-days: 1
 
   deploy-api:
@@ -98,7 +98,7 @@ jobs:
           environment_name: ${{ env.API_EB_ENVIRONMENT_NAME }}
           version_label: dev-${{ github.run_number }}-${{ github.sha }}
           region: ${{ env.AWS_REGION }}
-          deployment_package: ./ui-deploy-package/ui-deploy.zip
+          deployment_package: ./api-deploy-package/ui-deploy.zip
           use_existing_version_if_available: true
           wait_for_deployment: true
           wait_for_environment_recovery: 300
