@@ -15,7 +15,7 @@ public class ImageService(
     : IImageService
 {
     private static readonly RegionEndpoint BucketRegion = RegionEndpoint.USEast2;
-    private const string BucketName = "stain-manager";
+    private const string BucketName = "stain-manager-assets";
     private readonly string _mainDirectory = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Other";
 
     private static string FileKeyPrefixURL
