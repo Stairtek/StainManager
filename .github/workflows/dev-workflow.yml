@@ -58,9 +58,9 @@ jobs:
       - name: Generate deployment package
         run: |
           cd publish
-          zip -r deploy.zip ./*
+          zip -r api-deploy.zip ./*
           cd ..
-          mv publish/deploy.zip .
+          mv api-publish/api-deploy.zip .
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
