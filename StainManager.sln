@@ -14,6 +14,14 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Client", "Client", "{67AA26
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StainManager.Blazor.WebUI.Server", "Client\StainManager.Blazor.WebUI.Server\StainManager.Blazor.WebUI.Server.csproj", "{83B9BE45-1ADE-4780-85A7-0FBAED3790EB}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{394CE28A-AE66-4AEF-8D9A-0237D712E58C}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{74F11F2A-9961-4AA0-AB11-FBBCC63D4CB5}"
+	ProjectSection(SolutionItems) = preProject
+		.github\workflows\dev-workflow.yml = .github\workflows\dev-workflow.yml
+		.github\workflows\prod-workflow.yml = .github\workflows\prod-workflow.yml
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -47,6 +55,7 @@ Global
 		{767C588E-270A-4C70-83AC-1ACF98B02B31} = {1CAB8894-EF5E-4C6D-B90F-68F69AD61C06}
 		{1DF1D253-2939-46E7-8998-FB51C6B75C9C} = {1CAB8894-EF5E-4C6D-B90F-68F69AD61C06}
 		{83B9BE45-1ADE-4780-85A7-0FBAED3790EB} = {67AA26B3-286D-4F9D-8190-B6131F0E27B4}
+		{74F11F2A-9961-4AA0-AB11-FBBCC63D4CB5} = {394CE28A-AE66-4AEF-8D9A-0237D712E58C}
 	EndGlobalSection
 	GlobalSection(RiderSharedRunConfigurations) = postSolution
 	EndGlobalSection

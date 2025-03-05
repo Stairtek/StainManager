@@ -42,11 +42,11 @@ public static class DependencyInjection
         ILogger logger)
     {
         var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection");
-            
+        
         if (string.IsNullOrEmpty(connectionString))
-            configuration.GetConnectionString("DefaultConnection");
+            connectionString = configuration.GetConnectionString("DefaultConnection");
     
-        if (string.IsNullOrEmpty(connectionString))
+        if (string.IsNullOrEmpty(connectionString) && Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") != "Local")
         {
             try
             {

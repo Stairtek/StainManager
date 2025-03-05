@@ -9,7 +9,10 @@ builder.Logging.AddDebug();
 builder.Logging.SetMinimumLevel(LogLevel.Information);
 
 // Add AWS logging if in production
-builder.Logging.AddAWSProvider(builder.Configuration.GetAWSLoggingConfigSection());
+if (builder.Environment.IsProduction() || builder.Environment.IsStaging())
+{
+    builder.Logging.AddAWSProvider(builder.Configuration.GetAWSLoggingConfigSection());
+}
 
 var logger = LoggerFactory.Create(loggingBuilder =>
 {

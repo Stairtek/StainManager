@@ -1,12 +1,11 @@
 using Cropper.Blazor.Extensions;
 using MudBlazor.Services;
 using StainManager.Blazor.WebUI.Server;
-using StainManager.Blazor.WebUI.Server.Features.Shared.Services;
-using StainManager.Blazor.WebUI.Server.Features.Species.Services;
-using StainManager.Blazor.WebUI.Server.Features.Textures.Services;
 using StainManager.Blazor.WebUI.Server.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
+
+
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
@@ -20,8 +19,8 @@ builder.Services.AddLogging(logging =>
     logging.ClearProviders();
     logging.AddConsole();
     logging.AddDebug();
-    // logging.AddFilter("Microsoft.AspNetCore.SignalR", LogLevel.Debug);
-    // logging.AddFilter("Microsoft.AspNetCore.Http.Connections", LogLevel.Debug);
+    logging.AddFilter("Microsoft.AspNetCore.SignalR", LogLevel.Debug);
+    logging.AddFilter("Microsoft.AspNetCore.Http.Connections", LogLevel.Debug);
 });
 
 builder.Services.AddSignalR(options =>
