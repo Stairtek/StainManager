@@ -1,6 +1,6 @@
 @using Cropper.Blazor.Extensions
 @using Cropper.Blazor.Models
-@using StainManager.Blazor.WebUI.Server.Common.Models
+@using StainManager.Blazor.WebUI.Server.Models
 
 @inject ISnackbar Snackbar
 
@@ -132,10 +132,13 @@
     
     private async Task Zoom(decimal ratio)
     {
-        var cropperData = await _cropper.GetDataAsync(true);
+        await ExceptionHandler.ExecuteAsync(async () =>
+        {
+            var cropperData = await _cropper.GetDataAsync(true);
 
-        if ((ratio > 0 && cropperData.Width > 500) || ratio < 0)
-            _cropper.Zoom(ratio);
+            if ((ratio > 0 && cropperData.Width > 500) || ratio < 0)
+                _cropper.Zoom(ratio);
+        });
     }
 
     private void Cancel()
@@ -145,36 +148,39 @@
 
     private async Task Submit()
     {
-        _isLoading = true;
-        
-        var croppedCanvasOptions = new GetCroppedCanvasOptions()
+        await ExceptionHandler.ExecuteAsync(async () =>
         {
-            MaxHeight = 4096,
-            MaxWidth = 4096,
-            ImageSmoothingQuality = ImageSmoothingQuality.High.ToEnumString()
-        };
+            _isLoading = true;
+            
+            var croppedCanvasOptions = new GetCroppedCanvasOptions()
+            {
+                MaxHeight = 4096,
+                MaxWidth = 4096,
+                ImageSmoothingQuality = ImageSmoothingQuality.High.ToEnumString()
+            };
 
-        var croppedCanvasDataURL = await _cropper.GetCroppedCanvasDataURLAsync(croppedCanvasOptions);
-        
-        if (string.IsNullOrEmpty(croppedCanvasDataURL))
-        {
-            Snackbar.Add("Failed to get cropped canvas data URL", Severity.Error);
+            var croppedCanvasDataURL = await _cropper.GetCroppedCanvasDataURLAsync(croppedCanvasOptions);
+            
+            if (string.IsNullOrEmpty(croppedCanvasDataURL))
+            {
+                Snackbar.Add("Failed to get cropped canvas data URL", Severity.Error);
+                _isLoading = false;
+                return;
+            }
+            
+            var decodedImage = croppedCanvasDataURL.Decode();
+            var imageConfigurationModel = new ImageConfigurationModel(
+                decodedImage.base64ImageData,
+                string.Empty,
+                decodedImage.mediaType);
+            
+            var result = await OnImageConfiguredAsync.Invoke(imageConfigurationModel);
+            
             _isLoading = false;
-            return;
-        }
-        
-        var decodedImage = croppedCanvasDataURL.Decode();
-        var imageConfigurationModel = new ImageConfigurationModel(
-            decodedImage.base64ImageData,
-            string.Empty,
-            decodedImage.mediaType);
-        
-        var result = await OnImageConfiguredAsync.Invoke(imageConfigurationModel);
-        
-        _isLoading = false;
-        
-        if (result)
-            MudDialog.Close();
+            
+            if (result)
+                MudDialog.Close();
+        });
     }
 
 }

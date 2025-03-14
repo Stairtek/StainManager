@@ -1,9 +1,9 @@
 using System.Text.Json;
 using Mapster;
 using MudBlazor;
-using StainManager.Blazor.WebUI.Server.Common.Models;
+using StainManager.Blazor.WebUI.Server.Models;
 
-namespace StainManager.Blazor.WebUI.Server.Common.Helpers;
+namespace StainManager.Blazor.WebUI.Server.Helpers;
 
 public static class ManagementQueryHelpers
 {

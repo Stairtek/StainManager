@@ -31,7 +31,9 @@
     
     <MudMainContent>
         <MudContainer Class="my-5" MaxWidth="MaxWidth.False">
-            @Body
+            <GracefulErrorBoundary>
+                @Body
+            </GracefulErrorBoundary>
         </MudContainer>
     </MudMainContent>
 </MudLayout>
@@ -45,15 +47,15 @@
 
 @code {
 
-    MudTheme _theme = new MudTheme()
+    readonly MudTheme _theme = new()
     {
-        PaletteLight = new PaletteLight()
+        PaletteLight = new PaletteLight
         {
             Primary = Colors.Blue.Default,
             AppbarBackground = Colors.Gray.Darken2,
             DrawerBackground = Colors.Gray.Lighten3
         },
-        PaletteDark = new PaletteDark()
+        PaletteDark = new PaletteDark
         {
             Primary = Colors.Blue.Lighten1
         }

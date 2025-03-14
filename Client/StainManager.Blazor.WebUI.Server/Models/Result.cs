@@ -1,6 +1,4 @@
-using System.Text.Json.Serialization;
-
-namespace StainManager.Blazor.WebUI.Server.Common.Models;
+namespace StainManager.Blazor.WebUI.Server.Models;
 
 public class Result
 {
@@ -44,6 +42,11 @@ public class Result
     public static Result<T> Fail<T>(string? errorMessage, bool handledError = false)
     {
         return new Result<T>(default, false, errorMessage, handledError);
+    }
+    
+    public static Result<T> Fail<T>(string errorMessage, T? value)
+    {
+        return new Result<T>(value, false, errorMessage);
     }
 
     public static Result<T> FromValue<T>(T? value)

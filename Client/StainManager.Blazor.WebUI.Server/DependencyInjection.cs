@@ -1,4 +1,4 @@
-using StainManager.Blazor.WebUI.Server.Common.Interfaces;
+using StainManager.Blazor.WebUI.Server.Services;
 
 namespace StainManager.Blazor.WebUI.Server;
 

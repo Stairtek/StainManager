@@ -1,11 +1,32 @@
 using Cropper.Blazor.Extensions;
+using Microsoft.AspNetCore.Components.Server.Circuits;
 using MudBlazor.Services;
 using StainManager.Blazor.WebUI.Server;
+using StainManager.Blazor.WebUI.Server.Infrastructure;
 using StainManager.Blazor.WebUI.Server.Middleware;
+using StainManager.Blazor.WebUI.Server.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddSentry();
 
+builder.WebHost.UseSentry(options =>
+{
+    builder.Configuration.GetSection("Sentry").Bind(options);
+    
+    var environment = builder.Environment.EnvironmentName;
+    
+    if (string.IsNullOrEmpty(environment))
+        environment = "Other";
+    
+    options.Environment = environment;
+    
+    options.SetBeforeSend(sentryEvent =>
+    {
+        sentryEvent.SetTag("app_type", "frontend");
+        return sentryEvent;
+    });
+});
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
@@ -13,6 +34,9 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddCropper();
 builder.Services.AddMudServices();
+builder.Services.AddScoped<CircuitHandler, SentryCircuitHandler>();
+builder.Services.AddScoped<IGlobalExceptionHandler, GlobalExceptionHandler>();
+builder.Services.AddScoped<ISentryHandler, SentryHandler>();
 
 builder.Services.AddLogging(logging =>
 {
@@ -32,7 +56,7 @@ builder.Services.AddWebAPIServices();
 
 builder.Services.AddHttpContextAccessor();
 
-builder.Services.AddHttpClient("StainManagerAPI", client =>
+builder.Services.AddHttpClient<IStainManagerAPIClient, StainManagerAPIClient>(client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["ApiBaseAddress"] ?? string.Empty);
 });

@@ -1,6 +1,6 @@
 using FluentValidation;
 
-namespace StainManager.Blazor.WebUI.Server.Extensions;
+namespace StainManager.Blazor.WebUI.Server.Infrastructure;
 
 public static class ValidatorExtensions
 {

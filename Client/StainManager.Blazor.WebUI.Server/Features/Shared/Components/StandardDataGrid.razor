@@ -1,4 +1,4 @@
-@using StainManager.Blazor.WebUI.Server.Common.Models
+@using StainManager.Blazor.WebUI.Server.Models
 @typeparam TItem
 
 <MudDataGrid
@@ -127,57 +127,71 @@
     private bool _showDeleted;
     
     
-    private async Task<GridData<TItem>> LoadGridData(GridState<TItem> state)
+    private async Task<GridData<TItem>?> LoadGridData(GridState<TItem> state)
     {
-        var result = await LoadData(state, _searchQuery, _showDeleted);
-    
-        if (result.Failure)
+        return await ExceptionHandler.ExecuteAsync(async () =>
         {
-            Snackbar.Add(result.GetErrorMessage($"Failed to load {Settings.Title}"), Severity.Error);
-            return new GridData<TItem>();
-        }
+            var result = await LoadData(state, _searchQuery, _showDeleted);
         
-        return new GridData<TItem>
-        {
-            TotalItems = result.Value?.TotalCount ?? 0,
-            Items = result.Value?.Items ?? []
-        };
+            if (result.Failure)
+            {
+                Snackbar.Add(result.GetErrorMessage($"Failed to load {Settings.Title}"), Severity.Error);
+                return new GridData<TItem>();
+            }
+            
+            return new GridData<TItem>
+            {
+                TotalItems = result.Value?.TotalCount ?? 0,
+                Items = result.Value?.Items ?? []
+            };
+        });
     }
     
     <!--#region Toolbar Actions-->
-    private Task OnSearch(string searchText)
+    private async Task OnSearch(string searchText)
     {
-        _searchQuery = searchText;
-        _dataGrid.ReloadServerData();
-        return Task.CompletedTask;
+        await ExceptionHandler.ExecuteAsync(async () =>
+        {
+            _searchQuery = searchText;
+            await _dataGrid.ReloadServerData();
+        });
     }
     
-    private Task OnReset()
+    private async Task OnReset()
     {
-        _searchQuery = string.Empty;
-        _showDeleted = false;
-        _dataGrid.ClearFiltersAsync();
-        _dataGrid.ReloadServerData();
-
-        return Task.CompletedTask;
+        await ExceptionHandler.ExecuteAsync(async () =>
+        {
+            _searchQuery = string.Empty;
+            _showDeleted = false;
+            await _dataGrid.ClearFiltersAsync();
+            await _dataGrid.ReloadServerData();
+        });
     }
     
-    private Task OnRefresh()
+    private async Task OnRefresh()
     {
-        _dataGrid.ReloadServerData();
-        return Task.CompletedTask;
+        await ExceptionHandler.ExecuteAsync(async () =>
+        {
+            await _dataGrid.ReloadServerData();
+        });
     }
     
     private async Task OnToggleShowDeleted()
     {
-        _showDeleted = !_showDeleted;
-        await _dataGrid.ReloadServerData();
-        await ShowDeletedChanged.InvokeAsync(_showDeleted);
+        await ExceptionHandler.ExecuteAsync(async () =>
+        {
+            _showDeleted = !_showDeleted;
+            await _dataGrid.ReloadServerData();
+            await ShowDeletedChanged.InvokeAsync(_showDeleted);
+        });
     }
     <!--#endregion Toolbar Actions-->
     
     public async Task ReloadData()
     {
-        await _dataGrid.ReloadServerData();
+        await ExceptionHandler.ExecuteAsync(async () =>
+        {
+            await _dataGrid.ReloadServerData();
+        });
     }
 }

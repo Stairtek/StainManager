@@ -1,5 +1,5 @@
 @using MudBlazor.Utilities
-@using StainManager.Blazor.WebUI.Server.Common.Models
+@using StainManager.Blazor.WebUI.Server.Models
 
 <MudDialog>
     <TitleContent>
@@ -89,31 +89,37 @@
 
     private async Task LoadDropItems()
     {
-        _isLoading = true;
-        var result = await GetDropItems();
-        _isLoading = false;
-        
-        if (result is { Failure: true} || result.Value is null)
+        await ExceptionHandler.ExecuteAsync(async () =>
         {
-            Snackbar.Add(result.GetErrorMessage("Failed to load items"), Severity.Error);
-            return;
-        }
-        
-        _items = result.Value;
-        _itemsLoaded = true;
+            _isLoading = true;
+            var result = await GetDropItems();
+            _isLoading = false;
+            
+            if (result is { Failure: true} || result.Value is null)
+            {
+                Snackbar.Add(result.GetErrorMessage("Failed to load items"), Severity.Error);
+                return;
+            }
+            
+            _items = result.Value;
+            _itemsLoaded = true;
+        });
     }
 
     private void ItemUpdated(MudItemDropInfo<DropItem> dropZoneItem)
     {
-        if (dropZoneItem.Item == null)
+        ExceptionHandler.Execute(() =>
         {
-            Snackbar.Add("Failed to update order", Severity.Error);
-            return;
-        }
-        
-        dropZoneItem.Item.Zone = dropZoneItem.DropzoneIdentifier;
-        
-        _items.UpdateOrder(dropZoneItem, item => item.SortOrder, 0);
+            if (dropZoneItem.Item == null)
+            {
+                Snackbar.Add("Failed to update order", Severity.Error);
+                return;
+            }
+
+            dropZoneItem.Item.Zone = dropZoneItem.DropzoneIdentifier;
+
+            _items.UpdateOrder(dropZoneItem, item => item.SortOrder, 0);
+        });
     }
 
 
@@ -121,18 +127,21 @@
 
     private async Task Submit()
     {
-        _isLoading = true;
-        var result = await SaveSortOrder(_items);
-        _isLoading = false;
-        
-        if (result is { Failure: true })
+        await ExceptionHandler.ExecuteAsync(async () =>
         {
-            Snackbar.Add(result.GetErrorMessage("Failed to save sort order"), Severity.Error);
-            return;
-        }
-        
-        Snackbar.Add("Sort order saved successfully", Severity.Success);
-        
-        MudDialog.Close(DialogResult.Ok(true));
+            _isLoading = true;
+            var result = await SaveSortOrder(_items);
+            _isLoading = false;
+
+            if (result is { Failure: true })
+            {
+                Snackbar.Add(result.GetErrorMessage("Failed to save sort order"), Severity.Error);
+                return;
+            }
+
+            Snackbar.Add("Sort order saved successfully", Severity.Success);
+
+            MudDialog.Close(DialogResult.Ok(true));
+        });
     }
 }

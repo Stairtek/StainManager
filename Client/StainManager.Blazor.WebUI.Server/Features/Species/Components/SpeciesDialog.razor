@@ -1,6 +1,6 @@
-@using StainManager.Blazor.WebUI.Server.Common.Models
 @using StainManager.Blazor.WebUI.Server.Features.Species.Models
 @using StainManager.Blazor.WebUI.Server.Features.Species.Services
+@using StainManager.Blazor.WebUI.Server.Models
 
 @inject ISpeciesService SpeciesService
 @inject ITempImageService TempImageService
@@ -169,91 +169,103 @@
 
     private async Task LoadSpecies()
     {
-        if (Id is null or 0) return;
-
-        _isLoading = true;
-        var result = await SpeciesService.GetSpeciesByIdAsync(Id.Value);
-        _isLoading = false;
-
-        if (result is { Failure: true } || result.Value is null)
+        await ExceptionHandler.ExecuteAsync(async () =>
         {
-            Snackbar.Add(result.GetErrorMessage("Failed to load species"), Severity.Error);
-            return;
-        }
+            if (Id is null or 0) return;
 
-        _species = result.Value;
-        _speciesLoaded = true;
+            _isLoading = true;
+            var result = await SpeciesService.GetSpeciesByIdAsync(Id.Value);
+            _isLoading = false;
+
+            if (result is { Failure: true } || result.Value is null)
+            {
+                Snackbar.Add(result.GetErrorMessage("Failed to load species"), Severity.Error);
+                return;
+            }
+
+            _species = result.Value;
+            _speciesLoaded = true;
+        });
     }
 
     <!--#region Image-->
     private async Task UploadImage(IBrowserFile? file)
     {
-        var imageValidationResult = TempImageService.ValidateImage(file);
-        
-        if (!imageValidationResult.IsValid)
+        await ExceptionHandler.ExecuteAsync(async () =>
         {
-            Snackbar.Add(imageValidationResult.ErrorMessage, Severity.Error);
-            return;
-        }
+            var imageValidationResult = TempImageService.ValidateImage(file);
+            
+            if (!imageValidationResult.IsValid)
+            {
+                Snackbar.Add(imageValidationResult.ErrorMessage, Severity.Error);
+                return;
+            }
 
-        _isLoading = true;
-        var image = await TempImageService.GetImageFromBrowserFileAsync(file!);
-        var result = await TempImageService.UploadTempImageAsync(image!);
-        _isLoading = false;
-    
-        if (result.Value is null || result.Failure)
-        {
-            Snackbar.Add(result.GetErrorMessage("Failed to upload image"), Severity.Error);
-            return;
-        }
+            _isLoading = true;
+            var image = await TempImageService.GetImageFromBrowserFileAsync(file!);
+            var result = await TempImageService.UploadTempImageAsync(image!);
+            _isLoading = false;
         
-        _species.FullImageLocation = result.Value.FullImageURL;
-        _species.ThumbnailImageLocation = result.Value.ThumbnailImageURL;
+            if (result.Value is null || result.Failure)
+            {
+                Snackbar.Add(result.GetErrorMessage("Failed to upload image"), Severity.Error);
+                return;
+            }
+            
+            _species.FullImageLocation = result.Value.FullImageURL;
+            _species.ThumbnailImageLocation = result.Value.ThumbnailImageURL;
+        });
     }
 
     private async Task ConfigureImage()
     {
-        if (_species.FullImageLocation is null)
+        await ExceptionHandler.ExecuteAsync(async () =>
         {
-            Snackbar.Add("No image to edit", Severity.Error);
-            return;
-        }
-        
-        var parameters = new DialogParameters<ImageEditorDialog>
-        {
-            { c => c.FullImageLocation, _species.FullImageLocation },
-            { c => c.OnImageConfiguredAsync, OnImageConfiguredAsync }
-        };
-        var options = new DialogOptions
-        {
-            Position = DialogPosition.TopCenter,
-            MaxWidth = MaxWidth.Medium,
-            FullWidth = true,
-            CloseButton = true
-        };
-        
-        await DialogService.ShowAsync<ImageEditorDialog>(
-            "Configure Image", 
-            parameters,
-            options);
+            if (_species.FullImageLocation is null)
+            {
+                Snackbar.Add("No image to edit", Severity.Error);
+                return;
+            }
+            
+            var parameters = new DialogParameters<ImageEditorDialog>
+            {
+                { c => c.FullImageLocation, _species.FullImageLocation },
+                { c => c.OnImageConfiguredAsync, OnImageConfiguredAsync }
+            };
+            var options = new DialogOptions
+            {
+                Position = DialogPosition.TopCenter,
+                MaxWidth = MaxWidth.Medium,
+                FullWidth = true,
+                CloseButton = true
+            };
+            
+            await DialogService.ShowAsync<ImageEditorDialog>(
+                "Configure Image", 
+                parameters,
+                options);
+        });
     }
 
     private async Task<bool> OnImageConfiguredAsync(ImageConfigurationModel imageConfigurationModel)
     {
-        _isLoading = true;
-        var uploadResult = await TempImageService.UploadTempImageAsync(imageConfigurationModel);
-        _isLoading = false;
-        
-        if (uploadResult.Failure || uploadResult.Value == null)
+        return await ExceptionHandler.ExecuteAsync(async () =>
         {
-            Snackbar.Add(uploadResult.GetErrorMessage("Failed to upload image"), Severity.Error);
-            return false;
-        }
-        
-        _species.FullImageLocation = uploadResult.Value.FullImageURL;
-        _species.ThumbnailImageLocation = uploadResult.Value.ThumbnailImageURL;
+            _isLoading = true;
+            var uploadResult = await TempImageService.UploadTempImageAsync(imageConfigurationModel);
+            _isLoading = false;
+            
+            if (uploadResult.Failure || uploadResult.Value == null)
+            {
+                Snackbar.Add(uploadResult.GetErrorMessage("Failed to upload image"), Severity.Error);
+                return false;
+            }
+            
+            _species.FullImageLocation = uploadResult.Value.FullImageURL;
+            _species.ThumbnailImageLocation = uploadResult.Value.ThumbnailImageURL;
 
-        return true;
+            return true;
+        });
     }
     <!--#endregion Image-->
 
@@ -261,34 +273,37 @@
 
     private async Task Submit()
     {
-        await _form.Validate();
-
-        if (!_form.IsValid)
-            return;
-
-        _isLoading = true;
-        
-        var result = IsNew
-            ? await SpeciesService.CreateSpeciesAsync(_species)
-            : await SpeciesService.UpdateSpeciesAsync(_species);
-
-        _isLoading = false;
-        
-        if (result is { Failure: true })
+        await ExceptionHandler.ExecuteAsync(async () =>
         {
-            var failedMessage = IsNew
-                ? "Failed to add species"
-                : "Failed to update species";
-            Snackbar.Add(result.GetErrorMessage(failedMessage), Severity.Error);
-            return;
-        }
+            await _form.Validate();
 
-        var successMessage = IsNew
-            ? $"{_species.Name} added successfully"
-            : $"{_species.Name} updated successfully";
-        Snackbar.Add(successMessage, Severity.Success);
+            if (!_form.IsValid)
+                return;
 
-        MudDialog.Close(DialogResult.Ok(true));
+            _isLoading = true;
+            
+            var result = IsNew
+                ? await SpeciesService.CreateSpeciesAsync(_species)
+                : await SpeciesService.UpdateSpeciesAsync(_species);
+
+            _isLoading = false;
+            
+            if (result is { Failure: true })
+            {
+                var failedMessage = IsNew
+                    ? "Failed to add species"
+                    : "Failed to update species";
+                Snackbar.Add(result.GetErrorMessage(failedMessage), Severity.Error);
+                return;
+            }
+
+            var successMessage = IsNew
+                ? $"{_species.Name} added successfully"
+                : $"{_species.Name} updated successfully";
+            Snackbar.Add(successMessage, Severity.Success);
+
+            MudDialog.Close(DialogResult.Ok(true));
+        });
     }
 
 }

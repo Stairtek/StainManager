@@ -1,7 +1,7 @@
 using System.Text.Json;
-using StainManager.Blazor.WebUI.Server.Common.Models;
+using StainManager.Blazor.WebUI.Server.Models;
 
-namespace StainManager.Blazor.WebUI.Server.Extensions;
+namespace StainManager.Blazor.WebUI.Server.Infrastructure;
 
 public static class HttpClientExtensions
 {
@@ -23,20 +23,36 @@ public static class HttpClientExtensions
             return result ?? Result.Fail<T>("Failed to deserialize response");
         }
         
-        var errorResult = JsonSerializer.Deserialize<Result<T>>(responseString, DefaultJsonOptions);
-
+        var errorTResult = JsonSerializer.Deserialize<Result<T>>(responseString, DefaultJsonOptions);
+        
+        if (errorTResult is not null)
+        {
+            LogError(logger, errorTResult.HandledError, errorTResult.Error);
+            return Result.Fail<T>(errorTResult.Error, errorTResult.HandledError);
+        }
+        
+        var errorResult = JsonSerializer.Deserialize<Result<ExceptionResult>>(responseString, DefaultJsonOptions);
+        
         if (errorResult is null || string.IsNullOrEmpty(errorResult.Error))
         {
             logger.LogError("Failed to deserialize error response");
             return Result.Fail<T>("Failed to get response");
         }
 
-        if (errorResult.HandledError)
-            logger.LogWarning(responseString);
-        else
-            logger.LogError(responseString);
+        LogError(logger, errorResult.HandledError, errorResult.Error);
 
         return Result.Fail<T>(errorResult.Error, errorResult.HandledError);
+    }
+    
+    private static void LogError(ILogger logger, bool handledError, string? message)
+    {
+        if (handledError)
+        {
+            logger.LogWarning(message);
+            return;
+        }
+
+        logger.LogError(message);
     }
     
     

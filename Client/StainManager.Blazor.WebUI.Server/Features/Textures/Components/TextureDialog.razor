@@ -1,6 +1,6 @@
-@using StainManager.Blazor.WebUI.Server.Common.Models
 @using StainManager.Blazor.WebUI.Server.Features.Textures.Models
 @using StainManager.Blazor.WebUI.Server.Features.Textures.Services
+@using StainManager.Blazor.WebUI.Server.Models
 
 @inject ITexturesService TexturesService
 @inject ITempImageService TempImageService
@@ -120,96 +120,108 @@
     
     private async Task LoadTexture()
     {
-        if (Id is null or 0)
+        await ExceptionHandler.ExecuteAsync(async () =>
         {
+            if (Id is null or 0)
+            {
+                _textureLoaded = true;
+                return;
+            }
+            
+            _isLoading = true;
+            var result = await TexturesService.GetTextureByIdAsync(Id.Value);
+            _isLoading = false;
+            
+            if (result is { Failure: true } || result.Value is null)
+            {
+                Snackbar.Add(result.GetErrorMessage("Failed to load texture"), Severity.Error);
+                return;
+            }
+            
+            _texture = result.Value;
             _textureLoaded = true;
-            return;
-        }
-        
-        _isLoading = true;
-        var result = await TexturesService.GetTextureByIdAsync(Id.Value);
-        _isLoading = false;
-        
-        if (result is { Failure: true } || result.Value is null)
-        {
-            Snackbar.Add(result.GetErrorMessage("Failed to load texture"), Severity.Error);
-            return;
-        }
-        
-        _texture = result.Value;
-        _textureLoaded = true;
+        });
     }
     
     <!--#region Image-->
     private async Task UploadImage(IBrowserFile? file)
     {
-        var imageValidationResult = TempImageService.ValidateImage(file);
+        await ExceptionHandler.ExecuteAsync(async () =>
+        {
+            var imageValidationResult = TempImageService.ValidateImage(file);
 
-        if (!imageValidationResult.IsValid)
-        {
-            Snackbar.Add(imageValidationResult.ErrorMessage, Severity.Error);
-            return;
-        }
-        
-        _isLoading = true;
-        var image = await TempImageService.GetImageFromBrowserFileAsync(file!);
-        var result = await TempImageService.UploadTempImageAsync(image!);
-        _isLoading = false;
-        
-        if (result is { Failure: true } || result.Value is null)
-        {
-            Snackbar.Add(result.GetErrorMessage("Failed to upload image"), Severity.Error);
-            return;
-        }
-        
-        _texture.FullImageLocation = result.Value.FullImageURL;
-        _texture.ThumbnailImageLocation = result.Value.ThumbnailImageURL;
+            if (!imageValidationResult.IsValid)
+            {
+                Snackbar.Add(imageValidationResult.ErrorMessage, Severity.Error);
+                return;
+            }
+            
+            _isLoading = true;
+            var image = await TempImageService.GetImageFromBrowserFileAsync(file!);
+            var result = await TempImageService.UploadTempImageAsync(image!);
+            _isLoading = false;
+            
+            if (result is { Failure: true } || result.Value is null)
+            {
+                Snackbar.Add(result.GetErrorMessage("Failed to upload image"), Severity.Error);
+                return;
+            }
+            
+            _texture.FullImageLocation = result.Value.FullImageURL;
+            _texture.ThumbnailImageLocation = result.Value.ThumbnailImageURL;
+        });
     }
 
     private async Task ConfigureImage()
     {
-        if (_texture.FullImageLocation is null)
+        await ExceptionHandler.ExecuteAsync(async () =>
         {
-            Snackbar.Add("Please upload an image first.", Severity.Warning);
-            return;
-        }
+            if (_texture.FullImageLocation is null)
+            {
+                Snackbar.Add("Please upload an image first.", Severity.Warning);
+                return;
+            }
 
-        var parameters = new DialogParameters<ImageEditorDialog>
-        {
-            { c => c.FullImageLocation, _texture.FullImageLocation },
-            { c => c.OnImageConfiguredAsync, OnImageConfiguredAsync }
-        };
-        var options = new DialogOptions
-        {
-            Position = DialogPosition.TopCenter,
-            MaxWidth = MaxWidth.Medium,
-            FullWidth = true,
-            CloseButton = true
-        };
-        
-        await DialogService.ShowAsync<ImageEditorDialog>(
-            "Configure Image", 
-            parameters, 
-            options);
+            var parameters = new DialogParameters<ImageEditorDialog>
+            {
+                { c => c.FullImageLocation, _texture.FullImageLocation },
+                { c => c.OnImageConfiguredAsync, OnImageConfiguredAsync }
+            };
+            var options = new DialogOptions
+            {
+                Position = DialogPosition.TopCenter,
+                MaxWidth = MaxWidth.Medium,
+                FullWidth = true,
+                CloseButton = true
+            };
+            
+            await DialogService.ShowAsync<ImageEditorDialog>(
+                "Configure Image", 
+                parameters, 
+                options);
+        });
     }
 
     private async Task<bool> OnImageConfiguredAsync(
         ImageConfigurationModel imageConfigurationModel)
     {
-        _isLoading = true;
-        var result = await TempImageService.UploadTempImageAsync(imageConfigurationModel);
-        _isLoading = false;
-        
-        if (result is { Failure: true } || result.Value is null)
+        return await ExceptionHandler.ExecuteAsync(async () =>
         {
-            Snackbar.Add(result.GetErrorMessage("Failed to upload image"), Severity.Error);
-            return false;
-        }
-        
-        _texture.FullImageLocation = result.Value.FullImageURL;
-        _texture.ThumbnailImageLocation = result.Value.ThumbnailImageURL;
-        
-        return true;
+            _isLoading = true;
+            var result = await TempImageService.UploadTempImageAsync(imageConfigurationModel);
+            _isLoading = false;
+            
+            if (result is { Failure: true } || result.Value is null)
+            {
+                Snackbar.Add(result.GetErrorMessage("Failed to upload image"), Severity.Error);
+                return false;
+            }
+            
+            _texture.FullImageLocation = result.Value.FullImageURL;
+            _texture.ThumbnailImageLocation = result.Value.ThumbnailImageURL;
+            
+            return true;
+        });
     }
     <!--#endregion Image-->
     
@@ -217,33 +229,36 @@
 
     private async Task Submit()
     {
-        await _form.Validate();
-        
-        if (!_form.IsValid)
-            return;
-        
-        _isLoading = true;
-        
-        var result = IsNew
-            ? await TexturesService.CreateTextureAsync(_texture)
-            : await TexturesService.UpdateTextureAsync(_texture);
-        
-        _isLoading = false;
-        
-        if (result is { Failure: true })
+        await ExceptionHandler.ExecuteAsync(async () =>
         {
-            var failedMessage = IsNew
-                ? "Failed to add texture"
-                : "Failed to update texture";
-            Snackbar.Add(result.GetErrorMessage(failedMessage), Severity.Error);
-            return;
-        }
-        
-        var successMessage = IsNew
-            ? $"{_texture.Name} added successfully"
-            : $"{_texture.Name} updated successfully";
-        Snackbar.Add(successMessage, Severity.Success);
-        
-        MudDialog.Close(DialogResult.Ok(true));
+            await _form.Validate();
+            
+            if (!_form.IsValid)
+                return;
+            
+            _isLoading = true;
+            
+            var result = IsNew
+                ? await TexturesService.CreateTextureAsync(_texture)
+                : await TexturesService.UpdateTextureAsync(_texture);
+            
+            _isLoading = false;
+            
+            if (result is { Failure: true })
+            {
+                var failedMessage = IsNew
+                    ? "Failed to add texture"
+                    : "Failed to update texture";
+                Snackbar.Add(result.GetErrorMessage(failedMessage), Severity.Error);
+                return;
+            }
+            
+            var successMessage = IsNew
+                ? $"{_texture.Name} added successfully"
+                : $"{_texture.Name} updated successfully";
+            Snackbar.Add(successMessage, Severity.Success);
+            
+            MudDialog.Close(DialogResult.Ok(true));
+        });
     }
 }

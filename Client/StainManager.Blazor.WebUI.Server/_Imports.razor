@@ -10,7 +10,9 @@
 @using StainManager.Blazor.WebUI.Server;
 @using StainManager.Blazor.WebUI.Server.Features.Shared.Components
 @using StainManager.Blazor.WebUI.Server.Features.Shared.Services
+@using StainManager.Blazor.WebUI.Server.Infrastructure
 @using static Microsoft.AspNetCore.Components.Web.RenderMode
 
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
+@inject IGlobalExceptionHandler ExceptionHandler

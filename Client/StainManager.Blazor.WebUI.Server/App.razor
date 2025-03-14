@@ -1,4 +1,6 @@
-﻿<!DOCTYPE html>
+﻿@inject IConfiguration Configuration
+
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -11,13 +13,78 @@
     <ImportMap/>
     <link rel="icon" type="image/png" href="favicon.png"/>
     <HeadOutlet @rendermode="InteractiveServer"/>
+
+    
+    
 </head>
 
 <body>
     <Routes @rendermode="InteractiveServer"/>
-    <script src="_framework/blazor.web.js"></script>
     <script src="_content/MudBlazor/MudBlazor.min.js"></script>
     <script src="_content/Cropper.Blazor/cropper.min.js"></script>
+    
+    <script src="js/sentry.js"></script>
+    <script
+        src="https://browser.sentry-cdn.com/9.5.0/bundle.tracing.replay.debug.min.js"
+        integrity="sha384-cHIVvVa6o6jvPPqW0mGjU9OhhMNYJg28OJFtPA/6998Ock6bPS03Z+jh3D9GNmtj"
+        crossorigin="anonymous"
+    ></script>
+
+    @* <script src="js/sentry.js"></script> *@
+@*     <script> *@
+@*         (function () { *@
+@*             console.log("[Sentry] Setting up manual Sentry loader"); *@
+@* *@
+@*             // Create a function to load the Sentry SDK *@
+@*             window.loadSentrySdk = function() { *@
+@*                 console.log("[Sentry] Loading Sentry SDK"); *@
+@* *@
+@*                 // Create a script element for the main bundle *@
+@*                 const mainScript = document.createElement('script'); *@
+@*                 mainScript.src = "https://browser.sentry-cdn.com/7.69.0/bundle.min.js"; *@
+@*                 mainScript.crossOrigin = "anonymous"; *@
+@* *@
+@*                 // When the main script loads, load the replay integration *@
+@*                 mainScript.onload = function() { *@
+@*                     console.log("[Sentry] Sentry SDK loaded, now loading Replay integration"); *@
+@* *@
+@*                     // Load the Replay integration *@
+@*                     const replayScript = document.createElement('script'); *@
+@*                     // Make sure to use the correct path for the Replay integration *@
+@*                     replayScript.src = "https://browser.sentry-cdn.com/7.69.0/replay.min.js"; *@
+@*                     replayScript.crossOrigin = "anonymous"; *@
+@* *@
+@*                     // When the replay script loads, notify our handler *@
+@*                     replayScript.onload = function() { *@
+@*                         console.log("[Sentry] Sentry Replay integration loaded"); *@
+@* *@
+@*                         // Add a debug log to check what's available *@
+@*                         console.log("[Sentry] Available replay APIs:", { *@
+@*                             directReplay: typeof window.Sentry.replayIntegration === 'function', *@
+@*                             browserReplay: window.Sentry.BrowserReplay && *@
+@*                                 typeof window.Sentry.BrowserReplay.replayIntegration === 'function' *@
+@*                         }); *@
+@* *@
+@*                         if (window.onSentryLoaded) { *@
+@*                             window.onSentryLoaded(); *@
+@*                         } *@
+@*                     }; *@
+@* *@
+@*                     // Add the replay script to the document *@
+@*                     document.body.appendChild(replayScript); *@
+@*                 }; *@
+@* *@
+@*                 // Add the main script to the document *@
+@*                 document.body.appendChild(mainScript); *@
+@*             }; *@
+@* *@
+@*             // If we already have config, load Sentry immediately *@
+@*             if (window.sentryConfig && Object.keys(window.sentryConfig).length > 0) { *@
+@*                 window.loadSentrySdk(); *@
+@*             } *@
+@*         })(); *@
+@*     </script> *@
+    <script src="_framework/blazor.web.js"></script>
 </body>
 
 </html>

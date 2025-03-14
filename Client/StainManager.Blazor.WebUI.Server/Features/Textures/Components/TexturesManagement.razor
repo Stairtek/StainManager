@@ -1,8 +1,7 @@
 @page "/textures"
-
-@using StainManager.Blazor.WebUI.Server.Common.Models
 @using StainManager.Blazor.WebUI.Server.Features.Textures.Models
 @using StainManager.Blazor.WebUI.Server.Features.Textures.Services
+@using StainManager.Blazor.WebUI.Server.Models
 
 @inject ITexturesService TexturesService
 
@@ -114,18 +113,19 @@
     private StandardDataGrid<TextureManagementModel> _dataGrid = null!;
     private bool _showDeleted;
     
-    private async Task<Result<PaginatedList<TextureManagementModel>?>> LoadTextures(
+    private async Task<Result<PaginatedList<TextureManagementModel>?>?> LoadTextures(
         GridState<TextureManagementModel> state,
         string searchQuery,
         bool showDeleted)
     {
-        return await TexturesService.GetTexturesManagementAsync(
-            searchQuery,
-            state.Page + 1, // 0-based index
-            state.PageSize,
-            showDeleted,
-            state.SortDefinitions.FirstOrDefault(),
-            state.FilterDefinitions);
+        return await ExceptionHandler.ExecuteAsync(async () => 
+            await TexturesService.GetTexturesManagementAsync(
+                searchQuery,
+                state.Page + 1, // 0-based index
+                state.PageSize,
+                showDeleted,
+                state.SortDefinitions.FirstOrDefault(),
+                state.FilterDefinitions));
     }
 
     private void OnShowDeletedChanged(bool showDeleted)
@@ -136,27 +136,32 @@
     <!--#region Change Sort Order-->
     private async Task OnChangeSort()
     {
-        var parameters = new DialogParameters<SortOrderDialog>
-        {
-            { c => c.GetDropItems, LoadTexturesForSortOrder },
-            { c => c.SaveSortOrder, SaveSortOrder }
-        };
-        var options = new DialogOptions
-        {
-            Position = DialogPosition.TopCenter,
-            MaxWidth = MaxWidth.Small,
-            FullWidth = true,
-            CloseButton = true
-        };
-        var dialog = await DialogService.ShowAsync<SortOrderDialog>(
-            "Change Sort Order",
-            parameters,
-            options);
-        
-        var result = await dialog.Result;
-        
-        if (result is { Canceled: false })
-            await _dataGrid.ReloadData();
+        await ExceptionHandler.ExecuteAsync(
+            async () =>
+            {
+                var parameters = new DialogParameters<SortOrderDialog>
+                {
+                    { c => c.GetDropItems, LoadTexturesForSortOrder },
+                    { c => c.SaveSortOrder, SaveSortOrder }
+                };
+                var options = new DialogOptions
+                {
+                    Position = DialogPosition.TopCenter,
+                    MaxWidth = MaxWidth.Small,
+                    FullWidth = true,
+                    CloseButton = true
+                };
+                var dialog = await DialogService.ShowAsync<SortOrderDialog>(
+                    "Change Sort Order",
+                    parameters,
+                    options);
+                
+                var result = await dialog.Result;
+                
+                if (result is { Canceled: false })
+                    await _dataGrid.ReloadData();
+            },
+            "Failed to change sort order");
     }
 
     private async Task<Result<List<DropItem>?>> LoadTexturesForSortOrder()
@@ -190,63 +195,74 @@
     
     private async Task OpenTextureDialog(int? id = null)
     {
-        var parameters = new DialogParameters<TextureDialog>
-        {
-            { c => c.Id, id }
-        };
-        var options = new DialogOptions
-        {
-            Position = DialogPosition.TopCenter,
-            MaxWidth = MaxWidth.Small,
-            FullWidth = true,
-            CloseButton = true
-        };
         var title = id is null
             ? "Add Texture"
             : "Edit Texture";
-        var dialog = await DialogService.ShowAsync<TextureDialog>(
-            title,
-            parameters,
-            options);
-        var result = await dialog.Result;
-        
-        if (result is { Canceled: false })
-            await _dataGrid.ReloadData();
+
+        await ExceptionHandler.ExecuteAsync(async () =>
+            {
+                var parameters = new DialogParameters<TextureDialog>
+                {
+                    { c => c.Id, id }
+                };
+                var options = new DialogOptions
+                {
+                    Position = DialogPosition.TopCenter,
+                    MaxWidth = MaxWidth.Small,
+                    FullWidth = true,
+                    CloseButton = true
+                };
+                var dialog = await DialogService.ShowAsync<TextureDialog>(
+                    title,
+                    parameters,
+                    options);
+                var result = await dialog.Result;
+                
+                if (result is { Canceled: false })
+                    await _dataGrid.ReloadData();
+            },
+            $"Failed to {title.ToLower()}");
     }
 
     private async Task OpenDeleteTextureDialog(int textureId)
     {
-        var parameters = new DialogParameters<DeleteTextureDialog>
-        {
-            { c => c.Id, textureId }
-        };
-        var options = new DialogOptions
-        {
-            Position = DialogPosition.TopCenter,
-            MaxWidth = MaxWidth.ExtraSmall,
-            FullWidth = true,
-            CloseButton = true
-        };
-        var dialog = await DialogService.ShowAsync<DeleteTextureDialog>(
-            "Delete Texture",
-            parameters,
-            options);
-        var result = await dialog.Result;
-        
-        if (result is { Canceled: false })
-            await _dataGrid.ReloadData();
+        await ExceptionHandler.ExecuteAsync(async () =>
+            {
+                var parameters = new DialogParameters<DeleteTextureDialog>
+                {
+                    { c => c.Id, textureId }
+                };
+                var options = new DialogOptions
+                {
+                    Position = DialogPosition.TopCenter,
+                    MaxWidth = MaxWidth.ExtraSmall,
+                    FullWidth = true,
+                    CloseButton = true
+                };
+                var dialog = await DialogService.ShowAsync<DeleteTextureDialog>(
+                    "Delete Texture",
+                    parameters,
+                    options);
+                var result = await dialog.Result;
+                
+                if (result is { Canceled: false })
+                    await _dataGrid.ReloadData();
+            });
     }
 
     private async Task RestoreTexture(int textureId)
     {
-        var result = await TexturesService.RestoreTextureAsync(textureId);
-        
-        if (result is { Failure: true })
+        await ExceptionHandler.ExecuteAsync(async () =>
         {
-            Snackbar.Add(result.GetErrorMessage("Failed to restore texture"), Severity.Error);
-            return;
-        }
+            var result = await TexturesService.RestoreTextureAsync(textureId);
 
-        await _dataGrid.ReloadData();
+            if (result is { Failure: true })
+            {
+                Snackbar.Add(result.GetErrorMessage("Failed to restore texture"), Severity.Error);
+                return;
+            }
+
+            await _dataGrid.ReloadData();
+        });
     }
 }

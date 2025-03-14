@@ -1,0 +1,21 @@
+@inject IConfiguration Configuration
+@inject IJSRuntime JSRuntime
+
+@code {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await ExceptionHandler.ExecuteAsync(async () =>
+        {
+            if (!firstRender) return;
+            
+            var config = new
+            {
+                environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Other",
+                sentry = Configuration.GetSection("Sentry").Get<Dictionary<string, string>>()
+            };
+
+            await JSRuntime.InvokeVoidAsync("initializeSentry", config);
+        });
+    }
+
+}

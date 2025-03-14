@@ -1,8 +1,8 @@
 using MudBlazor;
-using StainManager.Blazor.WebUI.Server.Common.Helpers;
-using StainManager.Blazor.WebUI.Server.Common.Models;
 using StainManager.Blazor.WebUI.Server.Features.Species.Models;
-using StainManager.Blazor.WebUI.Server.Extensions;
+using StainManager.Blazor.WebUI.Server.Helpers;
+using StainManager.Blazor.WebUI.Server.Models;
+using StainManager.Blazor.WebUI.Server.Services;
 
 namespace StainManager.Blazor.WebUI.Server.Features.Species.Services;
 
@@ -29,19 +29,16 @@ public interface ISpeciesService
 }
 
 public class SpeciesService(
-    IHttpClientFactory httpClientFactory,
-    ILogger<SpeciesService> logger) 
+    IStainManagerAPIClient stainManagerAPIClient) 
     : ISpeciesService
 {
-    private readonly HttpClient _http = httpClientFactory.CreateClient("StainManagerAPI");
     private readonly string _baseUrl = "species";
 
     public async Task<List<SpeciesModel>?> GetSpeciesAsync(
         bool showDeleted = false)
     {
-        return await _http.GetAsync<List<SpeciesModel>>(
-            $"{_baseUrl}?isActive={!showDeleted}", 
-            logger);
+        return await stainManagerAPIClient.GetAsync<List<SpeciesModel>>(
+            $"{_baseUrl}?isActive={!showDeleted}");
     }
 
     public async Task<Result<PaginatedList<SpeciesManagementModel>?>> GetSpeciesManagementAsync(
@@ -60,35 +57,33 @@ public class SpeciesService(
             sortDefinition,
             filterDefinitions);
         
-        return await _http.GetAsync<PaginatedList<SpeciesManagementModel>?>(
-            $"{_baseUrl}/management?{query}", 
-            logger);
+        return await stainManagerAPIClient.GetAsync<PaginatedList<SpeciesManagementModel>?>(
+            $"{_baseUrl}/management?{query}");
     }
 
     public async Task<Result<SpeciesModel>> GetSpeciesByIdAsync(int id)
     {
-        return await _http.GetAsync<SpeciesModel>(
-            $"{_baseUrl}/{id}", 
-            logger);
+        return await stainManagerAPIClient.GetAsync<SpeciesModel>(
+            $"{_baseUrl}/{id}");
     }
 
     public async Task<Result<SpeciesModel>?> CreateSpeciesAsync(SpeciesModel species)
     {
-        return await _http.PostAsync($"{_baseUrl}", species, logger);
+        return await stainManagerAPIClient.PostAsync($"{_baseUrl}", species);
     }
 
     public async Task<Result<SpeciesModel>?> UpdateSpeciesAsync(SpeciesModel species)
     {
-        return await _http.PutAsync($"{_baseUrl}/{species.Id}", species, logger);
+        return await stainManagerAPIClient.PutAsync($"{_baseUrl}/{species.Id}", species);
     }
 
     public async Task<Result<bool>?> DeleteSpeciesAsync(int id)
     {
-        return await _http.DeleteAsync<bool>($"{_baseUrl}/{id}", logger);
+        return await stainManagerAPIClient.DeleteAsync<bool>($"{_baseUrl}/{id}");
     }
 
     public async Task<Result<bool>?> RestoreSpeciesAsync(int id)
     {
-        return await _http.PatchAsync($"{_baseUrl}/{id}/restore", false, logger);
+        return await stainManagerAPIClient.PatchAsync($"{_baseUrl}/{id}/restore", false);
     }
 }

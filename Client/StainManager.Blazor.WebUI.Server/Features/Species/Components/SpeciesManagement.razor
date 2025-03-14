@@ -1,8 +1,7 @@
 @page "/species"
-
-@using StainManager.Blazor.WebUI.Server.Common.Models
 @using StainManager.Blazor.WebUI.Server.Features.Species.Models
 @using StainManager.Blazor.WebUI.Server.Features.Species.Services
+@using StainManager.Blazor.WebUI.Server.Models
 
 @inject ISpeciesService SpeciesService
 
@@ -114,18 +113,19 @@
     private StandardDataGrid<SpeciesManagementModel> _dataGrid = null!;
     private bool _showDeleted;
 
-    private async Task<Result<PaginatedList<SpeciesManagementModel>?>> LoadSpecies(
+    private async Task<Result<PaginatedList<SpeciesManagementModel>?>?> LoadSpecies(
         GridState<SpeciesManagementModel> state,
         string searchQuery,
         bool showDeleted)
     {
-        return await SpeciesService.GetSpeciesManagementAsync(
-            searchQuery,
-            state.Page + 1, // 0-based index
-            state.PageSize,
-            showDeleted,
-            state.SortDefinitions.FirstOrDefault(),
-            state.FilterDefinitions);
+        return await ExceptionHandler.ExecuteAsync(
+            async () => await SpeciesService.GetSpeciesManagementAsync(
+                searchQuery,
+                state.Page + 1, // 0-based index
+                state.PageSize,
+                showDeleted,
+                state.SortDefinitions.FirstOrDefault(),
+                state.FilterDefinitions));
     }
     
     private void OnShowDeletedChanged(bool showDeleted)
@@ -135,60 +135,74 @@
 
     private async Task OpenSpeciesDialog(int? id = null)
     {
-        var parameters = new DialogParameters<SpeciesDialog>
-        {
-            { c => c.Id, id }
-        };
-        var options = new DialogOptions
-        {
-            Position = DialogPosition.TopCenter,
-            MaxWidth = MaxWidth.Medium,
-            FullWidth = true,
-            CloseButton = true
-        };
         var title = id is null
             ? "Add Species"
             : "Edit Species";
-        var dialog = await DialogService.ShowAsync<SpeciesDialog>(
-            title,
-            parameters,
-            options);
-        var result = await dialog.Result;
 
-        if (result is { Canceled: false })
-            await _dataGrid.ReloadData();
+        await ExceptionHandler.ExecuteAsync(
+            async () =>
+            {
+                var parameters = new DialogParameters<SpeciesDialog>
+                {
+                    { c => c.Id, id }
+                };
+                var options = new DialogOptions
+                {
+                    Position = DialogPosition.TopCenter,
+                    MaxWidth = MaxWidth.Medium,
+                    FullWidth = true,
+                    CloseButton = true
+                };
+                var dialog = await DialogService.ShowAsync<SpeciesDialog>(
+                    title,
+                    parameters,
+                    options);
+                var result = await dialog.Result;
+
+                if (result is { Canceled: false })
+                    await _dataGrid.ReloadData();
+            },
+            $"Failed to {title.ToLower()}");
     }
 
     private async Task OpenDeleteSpeciesDialog(int speciesId)
     {
-        var parameters = new DialogParameters<DeleteSpeciesDialog>
-        {
-            { c => c.Id, speciesId }
-        };
-        var options = new DialogOptions
-        {
-            Position = DialogPosition.TopCenter
-        };
-        var dialog = await DialogService.ShowAsync<DeleteSpeciesDialog>(
-            "Delete Species",
-            parameters,
-            options);
-        var result = await dialog.Result;
+        await ExceptionHandler.ExecuteAsync(
+            async () =>
+            {
+                var parameters = new DialogParameters<DeleteSpeciesDialog>
+                {
+                    { c => c.Id, speciesId }
+                };
+                var options = new DialogOptions
+                {
+                    Position = DialogPosition.TopCenter
+                };
+                var dialog = await DialogService.ShowAsync<DeleteSpeciesDialog>(
+                    "Delete Species",
+                    parameters,
+                    options);
+                var result = await dialog.Result;
 
-        if (result is { Canceled: false })
-            await _dataGrid.ReloadData();
+                if (result is { Canceled: false })
+                    await _dataGrid.ReloadData();
+            });
     }
 
     private async Task RestoreSpecies(int speciesId)
     {
-        var result = await SpeciesService.RestoreSpeciesAsync(speciesId);
+        await ExceptionHandler.ExecuteAsync(
+            async () =>
+            {
+                var result = await SpeciesService.RestoreSpeciesAsync(speciesId);
 
-        if (result is { Failure: true })
-        {
-            Snackbar.Add(result.GetErrorMessage("Failed to restore species"), Severity.Error);
-            return;
-        }
-        
-        await _dataGrid.ReloadData();
+                if (result is { Failure: true })
+                {
+                    Snackbar.Add(result.GetErrorMessage("Failed to restore species"), Severity.Error);
+                    return;
+                }
+                
+                await _dataGrid.ReloadData();
+            });
     }
 }

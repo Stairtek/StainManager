@@ -1,9 +1,6 @@
 using System.Net;
-using System.Text.Json;
-using StainManager.Blazor.WebUI.Server.Infrastructure;
-using StainManager.Blazor.WebUI.Server.Models;
 
-namespace StainManager.Blazor.WebUI.Server.Middleware;
+namespace StainManager.WebAPI.Middleware;
 
 public class ExceptionMiddleware(
     RequestDelegate next,
@@ -11,10 +8,9 @@ public class ExceptionMiddleware(
     IHub sentryHub)
 {
     private const string CorrelationIdHeaderName = "X-Correlation-Id";
+
     
-    public async Task InvokeAsync(
-        HttpContext context,
-        ISentryHandler sentryHandler)
+    public async Task InvokeAsync(HttpContext context)
     {
         var correlationId = GetOrCreateCorrelationId(context);
         
@@ -25,9 +21,8 @@ public class ExceptionMiddleware(
         {
             scope.Transaction = transaction;
             scope.SetTag("correlation_id", correlationId.ToString());
-            scope.SetTag("app_type", "blazor_server");
         });
-        
+
         try
         {
             transaction.SetTag("http.method", context.Request.Method);
@@ -39,19 +34,19 @@ public class ExceptionMiddleware(
             try
             {
                 await next(context);
-                
-                span.Finish(context.Response.StatusCode < 400
-                    ? SpanStatus.Ok
+
+                span.Finish(context.Response.StatusCode < 400 
+                    ? SpanStatus.Ok 
                     : SpanStatus.UnknownError);
             }
             catch (Exception)
             {
-                span.Finish(SpanStatus.UnknownError);
+                span.Finish(SpanStatus.InternalError);
                 throw;
             }
-            
-            transaction.Status = context.Response.StatusCode < 400
-                ? SpanStatus.Ok
+
+            transaction.Status = context.Response.StatusCode < 400 
+                ? SpanStatus.Ok 
                 : SpanStatus.UnknownError;
         }
         catch (Exception error)
@@ -60,24 +55,31 @@ public class ExceptionMiddleware(
 
             try
             {
-                await HandleExceptionAsync(context, error, correlationId, sentryHandler);
+                await HandleExceptionAsync(context, error, correlationId);
             }
             finally
             {
                 errorSpan.Finish(SpanStatus.InternalError);
             }
-            
+
             transaction.Status = SpanStatus.InternalError;
         }
         finally
         {
             transaction.SetTag("http.status_code", context.Response.StatusCode.ToString());
+            
             transaction.Finish();
         }
     }
-    
-    private static Guid GetOrCreateCorrelationId(HttpContext context)
+
+    private Guid GetOrCreateCorrelationId(HttpContext context)
     {
+        foreach (var header in context.Request.Headers)
+        {
+            foreach (var value in header.Value)
+                logger.LogInformation("Server - Request - Header: {Header} - Value: {Value}", header.Key, value);
+        }
+        
         var retrievedValue = context.Request.Headers
             .TryGetValue(CorrelationIdHeaderName, out var correlationIdValue);
         
@@ -86,22 +88,36 @@ public class ExceptionMiddleware(
         
         var parsedValue = Guid.TryParse(correlationIdValue, out var parsedId);
         
-        return parsedValue 
-            ? parsedId 
-            : CreateCorrelationId(context);
+        if (!parsedValue)
+            return CreateCorrelationId(context);
+        
+        logger.LogError("Server - Request - CorrelationId found in request header: {CorrelationId}", parsedId);
+        
+        return parsedId;
     }
 
-    private async Task HandleExceptionAsync(
-        HttpContext context,
+    private Guid CreateCorrelationId(HttpContext context)
+    {
+        var newId = Guid.NewGuid();
+        
+        logger.LogCritical("Server - Request - CorrelationId created: {CorrelationId}", newId);
+        
+        context.Request.Headers[CorrelationIdHeaderName] = newId.ToString();
+        
+        return newId;
+    }
+
+    
+    private Task HandleExceptionAsync(
+        HttpContext context, 
         Exception exception,
-        Guid correlationId,
-        ISentryHandler sentryHandler)
+        Guid correlationId)
     {
         context.Response.ContentType = "application/json";
         context.Response.StatusCode = (int)GetStatusCodeForException(exception);
         
         context.Response.Headers[CorrelationIdHeaderName] = correlationId.ToString();
-            
+
         var response = Result.Fail(
             "An unexpected error occurred", 
             new ExceptionResult
@@ -118,24 +134,17 @@ public class ExceptionMiddleware(
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             WriteIndented = true
         };
-            
+
         logger.LogError(
-            exception,
-            "An unexpected error occurred. Message: {Message}, Path: {Path}, CorrelationId: {CorrelationId}",
+            exception, 
+            "An unexpected error occurred. Message: {Message}, Path: {Path}, CorrelationId: {CorrelationId}", 
             exception.Message, context.Request.Path, correlationId);
-            
-        await sentryHandler.CaptureExceptionAsync(exception, exception.Message);
-            
-        await context.Response.WriteAsync(JsonSerializer.Serialize(response, options));
-    }
+        
+        sentryHub.CaptureException(exception);
 
-    private static Guid CreateCorrelationId(HttpContext context)
-    {
-        var newId = Guid.NewGuid();
-        context.Request.Headers[CorrelationIdHeaderName] = newId.ToString();
-        return newId;
+        return context.Response.WriteAsync(JsonSerializer.Serialize(response, options));
     }
-
+    
     private HttpStatusCode GetStatusCodeForException(Exception exception)
     {
         return exception switch
@@ -147,5 +156,4 @@ public class ExceptionMiddleware(
             _ => HttpStatusCode.InternalServerError
         };
     }
-
 }

@@ -2,8 +2,8 @@ using System.Net.Http.Headers;
 using System.Text.Json;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Components.Forms;
-using StainManager.Blazor.WebUI.Server.Common.Models;
 using StainManager.Blazor.WebUI.Server.Features.Shared.Models;
+using StainManager.Blazor.WebUI.Server.Models;
 
 namespace StainManager.Blazor.WebUI.Server.Features.Shared.Services;
 

@@ -1,4 +1,4 @@
-namespace StainManager.Blazor.WebUI.Server.Common.Models;
+namespace StainManager.Blazor.WebUI.Server.Models;
 
 public class StandardDataGridSettings(string title, string objectName)
 {

@@ -1,0 +1,98 @@
+@using Sentry
+
+@inject IHub SentryHub
+@inject ILogger<GracefulErrorBoundary> Logger
+
+@inherits ErrorBoundaryBase
+
+@if (CurrentException is null)
+{
+    @ChildContent
+}
+else
+{
+    <div class="@ContainerClass">
+        @if (IsRecoverable)
+        {
+            <MudPaper Class="pa-4 mb-4" Elevation="3">
+                <MudAlert Severity="Severity.Error" Class="mb-2">
+                    <MudText Typo="Typo.h6">Something went wrong</MudText>
+                    <MudText>@ErrorMessage</MudText>
+                </MudAlert>
+                
+                @if (ShowRetryButton)
+                {
+                    <MudButton Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Refresh" 
+                               OnClick="@(() => RecoverAsync())">
+                        Retry
+                    </MudButton>
+                }
+            </MudPaper>
+            
+            @FallbackContent
+        }
+        else
+        {
+            <MudAlert Severity="Severity.Error" Variant="Variant.Filled">
+                <MudText Typo="Typo.body1">We've encountered an error. Please refresh the page to continue.</MudText>
+                
+                @if (System.Diagnostics.Debugger.IsAttached || ShowErrorDetails)
+                {
+                    <MudExpansionPanels>
+                        <MudExpansionPanel Text="Error Details">
+                            <MudText Typo="Typo.body2">@CurrentException.Message</MudText>
+                            <MudText Typo="Typo.caption" Class="mt-2">@CurrentException.StackTrace</MudText>
+                        </MudExpansionPanel>
+                    </MudExpansionPanels>
+                }
+            </MudAlert>
+        }
+    </div>
+}
+
+@code {
+    [Parameter]
+    public bool IsRecoverable { get; set; } = true;
+
+    [Parameter]
+    public bool ShowRetryButton { get; set; } = true;
+    
+    [Parameter]
+    public bool ShowErrorDetails { get; set; }
+    
+    [Parameter]
+    public string? ErrorMessage { get; set; }
+    
+    [Parameter]
+    public string ContainerClass { get; set; } = "";
+    
+    [Parameter]
+    public RenderFragment? FallbackContent { get; set; }
+    
+
+    
+    protected override Task OnErrorAsync(Exception exception)
+    {
+        try
+        {
+            Logger.LogError(exception, "Error captured by GracefulErrorBoundary");
+
+            SentryHub?.CaptureException(exception);
+
+            if (string.IsNullOrEmpty(ErrorMessage))
+                ErrorMessage = exception.Message;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error occurred while handling exception in GracefulErrorBoundary");
+        }
+
+        return Task.CompletedTask;
+    }
+    
+    private void RecoverAsync()
+    {
+        // Clear the error state and re-render the original content
+        Recover();
+    }
+}

@@ -4,7 +4,7 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddWebServices(this IServiceCollection services)
     {
-        services.AddExceptionHandler<CustomExceptionHandler>();
+        //services.AddExceptionHandler<CustomExceptionHandler>();
 
         services.AddOpenApi();
         services.AddControllers();

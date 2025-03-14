@@ -1,4 +1,4 @@
-namespace StainManager.Blazor.WebUI.Server.Common.Models;
+namespace StainManager.Blazor.WebUI.Server.Models;
 
 public record struct Filter(
     string? Title,

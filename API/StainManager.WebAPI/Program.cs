@@ -12,6 +12,12 @@ builder.WebHost.UseSentry(options =>
         environment = "Other";
     
     options.Environment = environment;
+    
+    options.SetBeforeSend(sentryEvent =>
+    {
+        sentryEvent.SetTag("app_type", "api");
+        return sentryEvent;
+    });
 });
 
 // Enhanced logging configuration
@@ -32,7 +38,7 @@ var logger = LoggerFactory.Create(loggingBuilder =>
 }).CreateLogger("Program");
 
 logger.LogInformation("Application starting up. Environment: {Environment}", 
-    Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production");
+    Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Other");
 
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration, logger);

@@ -1,5 +1,5 @@
-using StainManager.Blazor.WebUI.Server.Extensions;
 using FluentValidation;
+using StainManager.Blazor.WebUI.Server.Infrastructure;
 
 namespace StainManager.Blazor.WebUI.Server.Features.Textures.Models;
 
